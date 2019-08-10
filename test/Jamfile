@@ -1,0 +1,21 @@
+#  Distributed under the Boost Software License, Version 1.0.
+#  (See accompanying file LICENSE_1_0.txt or copy at
+#  http://www.boost.org/LICENSE_1_0.txt)
+
+project libs/outbuf/test
+    : requirements
+      <include>../include
+      <include>../../../../
+    ;
+
+test-suite outbuf :
+    [ run test_raw_string_maker.cpp ]
+    ;
+
+test-suite minimal  : outbuf ;
+test-suite full     : outbuf ;
+test-suite extra    : outbuf ;
+
+explicit outbuf ;
+explicit minimal ;
+explicit extra ;

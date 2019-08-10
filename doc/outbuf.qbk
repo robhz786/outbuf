@@ -1,0 +1,124 @@
+[/==============================================================================
+    Use, modification and distribution is subject to the Boost Software License,
+    Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+    http://www.boost.org/LICENSE_1_0.txt)
+===============================================================================/]
+
+[library Boost.Outbuf
+    [quickbook 1.6]
+    [license
+        Distributed under the Boost Software License, Version 1.0.
+        (See accompanying file LICENSE_1_0.txt or copy at
+        [@http://www.boost.org/LICENSE_1_0.txt])
+    ]
+    [source-mode c++]
+]
+
+[template SPC[][^\u2000]]
+[template SPC2[][^\u2000\u2000]]
+[template SPC4[][^\u2000\u2000\u2000\u2000]]
+[template SPC8[][SPC4][SPC4]]
+[template SPC16[][SPC8][SPC8]]
+[template SPC32[][SPC16][SPC16]]
+
+
+[/
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+[def ____ [link  ]]
+
+]
+
+[section Rationale]
+
+In some environments heap allocation is to be avoided.
+So what if a function needs to return a string whose size and
+content is only evaluated at execution time ?
+Usually the solution is to make the caller to pass a buffer hoping it
+to be big enough. This library aims to bring a better solution.
+
+So let's consider a typical example: error messages.
+Suppose a function needs to access a file, and we want
+it to provide a detailed message when it fails:
+``
+#include <boost/outbuf.hpp> // freestanding C++ header
+
+void do_something( /* params ... */, int& ec, boost::outbuf& err_msg)
+{
+    // ... do something ...
+    if( /* some error */)
+    {
+        ec = /*some error code*/;
+        puts(err_msg, "Could not open file: ");
+        puts(err_msg, filename);
+        //  and maybe add something else in the error message,
+        //  like of some parameters' value.
+        return;
+    }
+    // ...
+}
+``
+
+The caller is the one who decides where this message is written to,
+by instantiating a type that derives from the `outbuf` abstract class.
+If, for instance, heap allocation is not a problem and the caller
+wants a `std::string`, then:
+
+``
+#include <boost/outbuff/string.hpp> // not freestanding C++
+
+void some_context( /* params ... */)
+{
+    // ...
+    boost::string_maker err_msg;
+    int ec;
+    do_something( /* args...*/ ec, err_msg);
+    if (ec != 0)
+    {
+        std::string err_str = err_msg.finish();
+        // ...
+    }
+    // ...
+}
+``
+Or the caller could delegate such decision to a higher context.
+``
+void some_context( /*  params ... */, int& ec, boost::outbuf& err_msg)
+{
+    // ...
+    do_something( /* args...*/ ec, err_msg);
+    if (ec != 0)
+    {
+        puts(err_msg, "\n When doing such and such thing.")
+        return;
+        // ...
+    }
+    // ...
+}
+``
+And more and more contextual information can be added as
+we move upwards in the call stack. All that without worring
+about where or how these string are stored or sent.
+This concern belong to the code that chooses which derivation
+of `outbuf` is used.
+
+The abstract class `outbuf` may resemble `std::streambuf`.
+But it has a simpler design and it is easier to implement
+a concrete subtype.
+
+
+[endsect]
+
+[section Writing into a `basic_outbuf`]
+[endsect]
+
+[section Implementing an `outbuf`]
+[endsect]
+
+[include reference.qbk]

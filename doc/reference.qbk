@@ -1,0 +1,202 @@
+[/==============================================================================
+    Use, modification and distribution is subject to the Boost Software License,
+    Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+    http://www.boost.org/LICENSE_1_0.txt)
+===============================================================================/]
+
+[section Reference]
+
+[section Header `boost/outbuf.hpp`]
+
+[section Class template `basic_outbuf`]
+
+[h4 Synopsis]
+
+``
+namespace boost {
+
+static constexpr recycled_outbuf_min_size = /*implementation defined >= 64*/;
+
+template <typename CharT, bool NoExcept>
+class basic_outbuf;
+
+template <typename CharT>
+class basic_outbuf<Chart, false>
+{
+public:
+
+    using char_type = CharT;
+    basic_outbuf(const basic_outbuf&) = delete;
+    basic_outbuf(basic_outbuf&&) = delete;
+    basic_outbuf& operator=(const basic_outbuf&) = delete;
+    basic_outbuf& operator=(basic_outbuf&&) = delete;
+
+    virtual ~basic_outbuf() = default;
+
+    CharT* pos() const noexcept
+        { return _pos; }
+    CharT* end() const noexcept
+        { return _end; }
+    bool good() const noexcept
+        { return _good; }
+    void advance_to(CharT* p) noexcept [[expects: pos() <= p && p <= end() ]]
+        { _pos = p; }
+    void advance(std::size_t n) noexcept [[expects: pos() + n <= end() ]]
+        { _pos += n; }
+    void ensure(std::size_t s) [[ expects: s <= recycled_outbuf_min_size ]]
+                               [[ ensures: pos() + s <= end(); ]]
+        { if (pos() + s > end()) recycle(); }
+
+    virtual bool recycle() [[ ensures: pos() + recycled_outbuf_min_size  <= end() ]]
+                           [[ ensures g: g == good() ]]
+                           = 0;
+protected:
+
+    basic_outbuf(CharT* pos_, CharT* end_) noexcept;
+        : _pos(pos_), _end(end_)
+        { }
+
+    basic_outbuf(CharT* pos_, std::size_t s) noexcept;
+        : _pos(pos_), _end(pos_ + s)
+        { }
+
+    void set_pos(CharT* p) noexcept
+        { _pos = p; };
+    void set_end(CharT* e) noexcept
+        { _end = e; };
+    void set_good(true g) noexcept
+        { _good = g; };
+
+private:
+
+    CharT* _pos;
+    CharT* _end;
+    bool _good = true;
+};
+
+template <typename CharT>
+class basic_outbuf<Chart, true>: public basic_outbuf<Chart, false>
+{
+public:
+
+    virtual void recycle() noexcept [[ ensures: size() >= recycled_outbuf_min_size ]]
+                                    [[ ensures g: g == good() ]]
+                                    = 0;
+
+    bool ensure(std::size_t s) noexcept [[ expects: s <= recycled_outbuf_min_size ]]
+                                        [[ ensures: size() >= s; ]]
+        { return s <= size() || recycle(); }
+
+protected:
+
+    using basic_outbuf<Chart, false>::basic_outbuf<Chart, false>;
+};
+
+// global functions
+
+template <typename CharT, bool NoExcept>
+void puts( basic_outbuf<Chart, NoExcept>& dest, const CharT* str, const CharT* str_end );
+
+template <typename CharT, bool NoExcept>
+void puts( basic_outbuf<Chart, NoExcept>& dest, const CharT* str, std::size_t str_len );
+
+template <typename CharT, bool NoExcept>
+void puts( basic_outbuf<Chart, NoExcept>& dest, const CharT* str );
+
+template <typename CharT, bool NoExcept>
+void putc( basic_outbuf<Chart, NoExcept>& dest, CharT c ) noexcept(NoExcept) ;
+
+// type aliases
+
+using outbuf    = basic_outbuf<char, false>;
+using u8outbuf  = basic_outbuf<char8_t, false>;
+using u26outbuf = basic_outbuf<char16_t, false>;
+using u32outbuf = basic_outbuf<char32_t, false>;
+using woutbuf   = basic_outbuf<wchar_t, false>;
+
+using outbuf_noexcept    = basic_outbuf<char, true>;
+using u8outbuf_noexcept  = basic_outbuf<char8_t, true>;
+using u26outbuf_noexcept = basic_outbuf<char16_t, true>;
+using u32outbuf_noexcept = basic_outbuf<char32_t, true>;
+using woutbuf_noexcept   = basic_outbuf<wchar_t, true>;
+
+} // namespace boost
+``
+
+[#outbuf_recycle]
+[table
+[[`virtual void recycle() noexcept(NoExcept) = 0;`]]
+[[[variablelist
+
+    [[ Postcondition]
+      [ `pos() +  min_buff_size <= end()`.]
+      [ The range \u005B `pos()`, `end()` \u0029 is valid accessible memory area ]
+      [ If the return value of `good()` was `false` before this call to `recycle()`,
+        then `good()` remains returning `false`.]]
+]]]
+]
+
+[endsect]
+
+
+[section Class template `raw_string_writer`]
+[h4 Synopsis]
+
+``
+namespace boost {
+
+template <typename CharT, bool NoExcept>
+class raw_string_writer: public basic_outbuf<CharT, NoExcept>
+{
+public:
+    raw_string_writer(CharT* dest, CharT* dest_end);
+    void recycle() noxcept(NoExcept) override
+            [[ ensures: size() >= recycled_outbuf_min_size ]]
+            [[ ensures g: g == good() ]];
+    struct result
+    {
+        CharT* it;
+        bool trucated;
+    };
+
+    result finish() noxcept();
+};
+
+} // namespace boost
+``
+
+[endsect]
+
+[endsect]
+
+[section Header `boost/outbuf/string.hpp`]
+
+[section Class template `string_appender`]
+[h4 Synopsis]
+``
+namespace boost {
+
+template <typename StringT, bool NoExcept>
+class string_appender: public basic_outbuf<CharT, NoExcept>
+{
+public:
+
+    string_appender(StringT& str);
+    bool recycle() noxcept(NoExcept) override
+            [[ ensures: size() >= recycled_outbuf_min_size ]]
+            [[ ensures g: g == good() ]];
+
+    void finish();
+};
+
+} // namespace boost
+``
+[endsect]
+[endsect]
+
+[section Header `boost/outbuf/FILE.hpp`]
+[endsect]
+
+[section Header `boost/outbuf/streambuf.hpp`]
+[endsect]
+[endsect]
