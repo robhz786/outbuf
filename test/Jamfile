@@ -9,7 +9,8 @@ project libs/outbuf/test
     ;
 
 test-suite outbuf :
-    [ run test_raw_string_maker.cpp ]
+    [ run test_raw_string_writer.cpp ]
+    [ run test_string_writer.cpp ]
     ;
 
 test-suite minimal  : outbuf ;

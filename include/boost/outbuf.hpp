@@ -17,8 +17,6 @@
 namespace boost {
 namespace outbuf {
 
-static constexpr std::ptrdiff_t min_recycled_outbuf_size = 64;
-
 namespace detail {
 
 template <std::size_t CharSize>
@@ -43,6 +41,7 @@ public:
                  , "Forbidden character type in underlying_outbuf" );
 
     using char_type = CharT;
+    static constexpr std::ptrdiff_t min_size_after_recycle = 64;
 
     underlying_outbuf(const underlying_outbuf&) = delete;
     underlying_outbuf(underlying_outbuf&&) = delete;
@@ -87,7 +86,7 @@ public:
     }
     void ensure(std::size_t s)
     {
-        BOOST_ASSERT(s <= boost::outbuf::min_recycled_outbuf_size);
+        BOOST_ASSERT(s <= min_size_after_recycle);
         if (pos() + s > end())
         {
             recycle();
@@ -299,7 +298,16 @@ namespace detail {
 
 inline char32_t* _outbuf_garbage_buf()
 {
-    static char32_t arr[boost::outbuf::min_recycled_outbuf_size];
+    constexpr std::size_t s1
+        = (basic_outbuf<char, true>::min_size_after_recycle + 1) / 4;
+    constexpr std::size_t s2
+        = (basic_outbuf<char16_t, true>::min_size_after_recycle + 1) / 2;
+    constexpr std::size_t s4
+        = basic_outbuf<char32_t, true>::min_size_after_recycle;
+    constexpr std::size_t max_s1_s2 = s1 > s2 ? s1 : s2;
+    constexpr std::size_t max_s1_s2_s4 = max_s1_s2 > s4 ? max_s1_s2 : s4;
+
+    static char32_t arr[max_s1_s2_s4];
     return arr;
 }
 
@@ -315,7 +323,7 @@ template <typename CharT>
 inline CharT* outbuf_garbage_buf_end()
 {
     return boost::outbuf::outbuf_garbage_buf<CharT>()
-        + boost::outbuf::min_recycled_outbuf_size;
+        + boost::outbuf::basic_outbuf<CharT, false>::min_size_after_recycle;
 }
 
 template <typename CharT>
@@ -374,217 +382,6 @@ public:
 private:
 
     CharT* _it;
-};
-
-namespace detail {
-
-template <typename T>
-class string_writer_mixin;
-
-template <template <typename, bool> class Tmp, typename StringT>
-class string_writer_mixin<Tmp<StringT, false>>
-{
-    using T = Tmp<StringT, false>;
-    using char_type = typename StringT::value_type;
-
-public:
-
-    string_writer_mixin() = default;
-
-    void do_recycle() noexcept
-    {
-        auto * p = static_cast<T*>(this)->pos();
-        static_cast<T*>(this)->set_pos(_buf);
-
-        if (p >= buf_begin() && static_cast<T*>(this)->good())
-        {
-            if (p > buf_end())
-            {
-                p = buf_end();
-            }
-            static_cast<T*>(this)->_str.append(buf_begin(), p);
-        }
-    }
-    void do_finish()
-    {
-        if (static_cast<T*>(this)->good())
-        {
-            auto p = static_cast<T*>(this)->pos();
-            static_cast<T*>(this)->set_good(false);
-            static_cast<T*>(this)->_str.append(buf_begin(), p);
-        }
-    }
-
-    char_type* buf_begin()
-    {
-        return _buf;
-    }
-    char_type* buf_end()
-    {
-        return _buf + boost::outbuf::min_recycled_outbuf_size;
-    }
-
-private:
-
-    char_type _buf[boost::outbuf::min_recycled_outbuf_size];
-};
-
-#if defined(__cpp_exceptions)
-
-template <template <typename, bool> class Tmp, typename StringT>
-class string_writer_mixin<Tmp<StringT, true>>
-{
-    using T = Tmp<StringT, true>;
-    using char_type = typename StringT::value_type;
-
-public:
-
-    string_writer_mixin() = default;
-
-    void do_recycle() noexcept
-    {
-        auto * p = static_cast<T*>(this)->pos();
-        static_cast<T*>(this)->set_pos(buf_begin());
-
-        if (static_cast<T*>(this)->good() && buf_begin() <= p)
-        {
-            if (p > buf_end())
-            {
-                p = buf_end();
-            }
-            try
-            {
-                static_cast<T*>(this)->_str.append(buf_begin(), p);
-            }
-            catch(...)
-            {
-                _eptr = std::current_exception();
-                static_cast<T*>(this)->set_good(false);
-            }
-        }
-    }
-
-    void do_finish()
-    {
-        if (_eptr != nullptr)
-        {
-            std::rethrow_exception(_eptr);
-        }
-        if (static_cast<T*>(this)->good())
-        {
-            static_cast<T*>(this)->set_good(false);
-            auto p = static_cast<T*>(this)->pos();
-            if (p >= buf_begin())
-            {
-                if (p > buf_end())
-                {
-                    p = buf_end();
-                }
-                static_cast<T*>(this)->_str.append(buf_begin(), p);
-            }
-        }
-    }
-
-    char_type* buf_begin()
-    {
-        return _buf;
-    }
-    char_type* buf_end()
-    {
-        return _buf + boost::outbuf::min_recycled_outbuf_size;
-    }
-
-    std::exception_ptr _eptr = nullptr;
-    char_type _buf[boost::outbuf::min_recycled_outbuf_size];
-};
-
-#else // defined(__cpp_exceptions)
-
-template <template <typename, bool> class Tmp, typename StringT>
-class string_writer_mixin<Tmp<StringT, true>>
-    : public string_writer_mixin<Tmp<StringT, false>>
-{
-};
-
-#endif // defined(__cpp_exceptions)
-
-} // namespace detail
-
-template <typename StringT, bool NoExcept>
-class string_appender
-    : public boost::outbuf::basic_outbuf<typename StringT::value_type, NoExcept>
-    , private boost::outbuf::detail::string_writer_mixin
-        < string_appender<StringT, NoExcept> >
-{
-    static_assert(std::is_class<StringT>::value, "StringT must be a class type");
-
-    template <typename> friend class detail::string_writer_mixin;
-    using char_type = typename StringT::value_type;
-
-public:
-
-    string_appender(StringT& str_)
-        : basic_outbuf<char_type, NoExcept>(this->buf_begin(), this->buf_end())
-        , _str(str_)
-    {
-    }
-    string_appender() = delete;
-    string_appender(const string_appender&) = delete;
-    string_appender(string_appender&&) = delete;
-    ~string_appender() = default;
-
-    void recycle() noexcept(NoExcept) override
-    {
-        this->do_recycle();
-    }
-
-    void finish()
-    {
-        this->do_finish();
-    }
-
-private:
-
-    StringT& _str;
-};
-
-template <typename StringT, bool NoExcept>
-class string_maker
-    : public boost::outbuf::basic_outbuf<typename StringT::value_type, NoExcept>
-    , private boost::outbuf::detail::string_writer_mixin
-        < string_maker<StringT, NoExcept> >
-{
-    static_assert( std::is_class<StringT>::value
-                 , "StringT must be a class type" );
-
-    template <typename> friend class detail::string_writer_mixin;
-    using char_type = typename StringT::value_type;
-
-public:
-
-    string_maker()
-        : basic_outbuf<char_type, NoExcept>(this->buf_begin(), this->buf_end())
-    {
-    }
-
-    string_maker(const string_maker&) = delete;
-    string_maker(string_maker&&) = delete;
-    ~string_maker() = default;
-
-    void recycle() noexcept(NoExcept) override
-    {
-        this->do_recycle();
-    }
-
-    StringT finish()
-    {
-        this->do_finish();
-        return std::move(_str);
-    }
-
-private:
-
-    StringT _str;
 };
 
 } // namespace outbuf
