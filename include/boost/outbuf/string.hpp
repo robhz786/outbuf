@@ -62,7 +62,7 @@ public:
 private:
 
     static constexpr std::size_t _buf_size
-    = boost::outbuf::basic_outbuf<CharT, false>::min_size_after_recycle;
+    = boost::outbuf::basic_outbuf<false, CharT>::min_size_after_recycle;
     CharT _buf[_buf_size];
 };
 
@@ -131,16 +131,16 @@ public:
 private:
 
     static constexpr std::size_t _buf_size
-        = boost::outbuf::basic_outbuf<CharT, true>::min_size_after_recycle;
+        = boost::outbuf::basic_outbuf<true, CharT>::min_size_after_recycle;
     std::exception_ptr _eptr = nullptr;
     CharT _buf[_buf_size];
 };
 
 #else // defined(__cpp_exceptions)
 
-template <template <bool, typename> class Tmp, typename StringT>
-class string_writer_mixin<Tmp<StringT, true>>
-    : public string_writer_mixin<Tmp<StringT, false>>
+template <bool NoExcept, typename CharT>
+class string_writer_mixin<true, CharT>
+    : public string_writer_mixin<false, CharT>
 {
 };
 
@@ -152,7 +152,7 @@ template < bool NoExcept
          , typename CharT
          , typename Traits = std::char_traits<CharT> >
 class basic_string_appender
-    : public boost::outbuf::basic_outbuf<CharT, NoExcept>
+    : public boost::outbuf::basic_outbuf<NoExcept, CharT>
     , private boost::outbuf::detail::string_writer_mixin
         < basic_string_appender<NoExcept, CharT, Traits>, NoExcept, CharT >
 {
@@ -163,7 +163,7 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_appender(string_type& str_)
-        : basic_outbuf<CharT, NoExcept>(this->buf_begin(), this->buf_end())
+        : basic_outbuf<NoExcept, CharT>(this->buf_begin(), this->buf_end())
         , _str(str_)
     {
     }
@@ -191,7 +191,7 @@ template < bool NoExcept
          , typename CharT
          , typename Traits = std::char_traits<CharT> >
 class basic_string_maker
-    : public boost::outbuf::basic_outbuf<CharT, NoExcept>
+    : public boost::outbuf::basic_outbuf<NoExcept, CharT>
     , private boost::outbuf::detail::string_writer_mixin
         < basic_string_maker<NoExcept, CharT, Traits>, NoExcept, CharT >
 {
@@ -202,7 +202,7 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_maker()
-        : basic_outbuf<CharT, NoExcept>(this->buf_begin(), this->buf_end())
+        : basic_outbuf<NoExcept, CharT>(this->buf_begin(), this->buf_end())
     {
     }
 

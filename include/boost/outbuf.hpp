@@ -120,11 +120,11 @@ private:
     bool _good = true;
 };
 
-template <typename CharT, bool NoExcept>
+template <bool NoExcept, typename CharT>
 class basic_outbuf;
 
 template <typename CharT>
-class basic_outbuf<CharT, false>
+class basic_outbuf<false, CharT>
     : public boost::outbuf::underlying_outbuf
         < boost::outbuf::underlying_outbuf_char_type<CharT> >
 {
@@ -178,7 +178,7 @@ protected:
 };
 
 template <typename CharT>
-class basic_outbuf<CharT, true>: public basic_outbuf<CharT, false>
+class basic_outbuf<true, CharT>: public basic_outbuf<false, CharT>
 {
 public:
 
@@ -186,16 +186,16 @@ public:
 
 protected:
 
-    using basic_outbuf<CharT, false>::basic_outbuf;
+    using basic_outbuf<false, CharT>::basic_outbuf;
 };
 
 // global functions
 
 namespace  detail{
 
-template<typename CharT, bool NoExcept>
+template<bool NoExcept, typename CharT>
 void puts_continuation
-    ( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob
+    ( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
     , const CharT* str
     , std::size_t len )
 {
@@ -224,8 +224,8 @@ void puts_continuation
 
 } // namespace detail
 
-template <typename CharT, bool NoExcept>
-void puts( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob
+template <bool NoExcept, typename CharT>
+void puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
          , const CharT* str
          , std::size_t len )
 {
@@ -237,12 +237,12 @@ void puts( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob
     }
     else
     {
-        boost::outbuf::detail::puts_continuation(ob, str, len);
+        boost::outbuf::detail::puts_continuation<NoExcept, CharT>(ob, str, len);
     }
 }
 
-template <typename CharT, bool NoExcept>
-void puts( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob
+template <bool NoExcept, typename CharT>
+void puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
          , const CharT* str
          , const CharT* str_end )
 {
@@ -250,18 +250,32 @@ void puts( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob
     boost::outbuf::puts(ob, str, str_end - str);
 }
 
-inline void puts( boost::outbuf::basic_outbuf<char, false>& ob, const char* str )
+inline void puts( boost::outbuf::basic_outbuf<true, char>& ob
+                , const char* str )
 {
-    boost::outbuf::puts(ob, str, std::strlen(str));
+    boost::outbuf::puts<true, char>(ob, str, std::strlen(str));
 }
 
-inline void puts( boost::outbuf::basic_outbuf<wchar_t, false>& ob, const wchar_t* str )
+inline void puts( boost::outbuf::basic_outbuf<false, char>& ob
+                , const char* str )
 {
-    boost::outbuf::puts(ob, str, std::wcslen(str));
+    boost::outbuf::puts<false, char>(ob, str, std::strlen(str));
 }
 
-template <typename CharT, bool NoExcept>
-void putc( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob, CharT c ) noexcept(NoExcept)
+inline void puts( boost::outbuf::basic_outbuf<true, wchar_t>& ob
+                , const wchar_t* str )
+{
+    boost::outbuf::puts<true, wchar_t>(ob, str, std::wcslen(str));
+}
+
+inline void puts( boost::outbuf::basic_outbuf<false, wchar_t>& ob
+                , const wchar_t* str )
+{
+    boost::outbuf::puts<false, wchar_t>(ob, str, std::wcslen(str));
+}
+
+template <bool NoExcept, typename CharT>
+void putc( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob, CharT c )
 {
     auto p = ob.pos();
     if (p != ob.end())
@@ -280,30 +294,30 @@ void putc( boost::outbuf::basic_outbuf<CharT, NoExcept>& ob, CharT c ) noexcept(
 // type aliases
 
 #if defined(__cpp_char8_t)
-using u8outbuf  = basic_outbuf<char8_t, false>;
-using u8outbuf_noexcept  = basic_outbuf<char8_t, true>;
+using u8outbuf  = basic_outbuf<false, char8_t>;
+using u8outbuf_noexcept  = basic_outbuf<true, char8_t>;
 #endif
 
-using outbuf    = basic_outbuf<char, false>;
-using u26outbuf = basic_outbuf<char16_t, false>;
-using u32outbuf = basic_outbuf<char32_t, false>;
-using woutbuf   = basic_outbuf<wchar_t, false>;
+using outbuf    = basic_outbuf<false, char>;
+using u26outbuf = basic_outbuf<false, char16_t>;
+using u32outbuf = basic_outbuf<false, char32_t>;
+using woutbuf   = basic_outbuf<false, wchar_t>;
 
-using outbuf_noexcept    = basic_outbuf<char, true>;
-using u26outbuf_noexcept = basic_outbuf<char16_t, true>;
-using u32outbuf_noexcept = basic_outbuf<char32_t, true>;
-using woutbuf_noexcept   = basic_outbuf<wchar_t, true>;
+using outbuf_noexcept    = basic_outbuf<true, char>;
+using u26outbuf_noexcept = basic_outbuf<true, char16_t>;
+using u32outbuf_noexcept = basic_outbuf<true, char32_t>;
+using woutbuf_noexcept   = basic_outbuf<true, wchar_t>;
 
 namespace detail {
 
 inline char32_t* _outbuf_garbage_buf()
 {
     constexpr std::size_t s1
-        = (basic_outbuf<char, true>::min_size_after_recycle + 1) / 4;
+        = (basic_outbuf<true, char>::min_size_after_recycle + 1) / 4;
     constexpr std::size_t s2
-        = (basic_outbuf<char16_t, true>::min_size_after_recycle + 1) / 2;
+        = (basic_outbuf<true, char16_t>::min_size_after_recycle + 1) / 2;
     constexpr std::size_t s4
-        = basic_outbuf<char32_t, true>::min_size_after_recycle;
+        = basic_outbuf<true, char32_t>::min_size_after_recycle;
     constexpr std::size_t max_s1_s2 = s1 > s2 ? s1 : s2;
     constexpr std::size_t max_s1_s2_s4 = max_s1_s2 > s4 ? max_s1_s2 : s4;
 
@@ -323,29 +337,29 @@ template <typename CharT>
 inline CharT* outbuf_garbage_buf_end()
 {
     return boost::outbuf::outbuf_garbage_buf<CharT>()
-        + boost::outbuf::basic_outbuf<CharT, false>::min_size_after_recycle;
+        + boost::outbuf::basic_outbuf<false, CharT>::min_size_after_recycle;
 }
 
 template <typename CharT>
-class raw_string_writer final: public boost::outbuf::basic_outbuf<CharT, true>
+class raw_string_writer final: public boost::outbuf::basic_outbuf<true, CharT>
 {
 public:
 
     raw_string_writer(CharT* dest, CharT* dest_end)
-        : basic_outbuf<CharT, true>(dest, dest_end - 1)
+        : basic_outbuf<true, CharT>(dest, dest_end - 1)
     {
         BOOST_ASSERT(dest < dest_end);
     }
 
     raw_string_writer(CharT* dest, std::size_t len)
-        : basic_outbuf<CharT, true>(dest, dest + len - 1)
+        : basic_outbuf<true, CharT>(dest, dest + len - 1)
     {
         BOOST_ASSERT(len != 0);
     }
 
     template <std::size_t N>
     raw_string_writer(CharT (&dest)[N])
-        : basic_outbuf<CharT, true>(dest, dest + N - 1)
+        : basic_outbuf<true, CharT>(dest, dest + N - 1)
     {
     }
 
