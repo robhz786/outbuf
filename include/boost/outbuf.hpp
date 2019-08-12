@@ -19,6 +19,8 @@ namespace outbuf {
 
 namespace detail {
 
+class outbuf_test_tool;
+
 template <std::size_t CharSize>
 struct underlying_outbuf_char_type_impl;
 
@@ -118,6 +120,7 @@ private:
     CharT* _pos;
     CharT* _end;
     bool _good = true;
+    friend class boost::outbuf::detail::outbuf_test_tool;
 };
 
 template <bool NoExcept, typename CharT>
@@ -309,6 +312,17 @@ using u32outbuf_noexcept = basic_outbuf<true, char32_t>;
 using woutbuf_noexcept   = basic_outbuf<true, wchar_t>;
 
 namespace detail {
+
+class outbuf_test_tool
+{
+public:
+    template<typename CharT>
+    static void turn_into_bad(underlying_outbuf<CharT>& ob)
+    { 
+        ob.set_good(false);
+    }
+};
+
 
 inline char32_t* _outbuf_garbage_buf()
 {
