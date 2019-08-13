@@ -19,7 +19,7 @@ int main()
 
         char buff[sizeof(expected)];
 
-        boost::outbuf::raw_string_writer<char> sw(buff);
+        boost::outbuf::basic_cstr_writer<char> sw(buff);
         boost::outbuf::puts(sw, s1a);
         boost::outbuf::puts(sw, s1b);
         auto r1 = sw.finish();
@@ -53,7 +53,7 @@ int main()
 
     {
         char buff[8];
-        boost::outbuf::raw_string_writer<char> sw(buff);
+        boost::outbuf::basic_cstr_writer<char> sw(buff);
         puts(sw, "Hello");
         puts(sw, " World");
         puts(sw, "blah blah blah");

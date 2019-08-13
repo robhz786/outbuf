@@ -318,7 +318,7 @@ class outbuf_test_tool
 public:
     template<typename CharT>
     static void turn_into_bad(underlying_outbuf<CharT>& ob)
-    { 
+    {
         ob.set_good(false);
     }
 };
@@ -355,24 +355,24 @@ inline CharT* outbuf_garbage_buf_end()
 }
 
 template <typename CharT>
-class raw_string_writer final: public boost::outbuf::basic_outbuf<true, CharT>
+class basic_cstr_writer final: public boost::outbuf::basic_outbuf<true, CharT>
 {
 public:
 
-    raw_string_writer(CharT* dest, CharT* dest_end)
+    basic_cstr_writer(CharT* dest, CharT* dest_end)
         : basic_outbuf<true, CharT>(dest, dest_end - 1)
     {
         BOOST_ASSERT(dest < dest_end);
     }
 
-    raw_string_writer(CharT* dest, std::size_t len)
+    basic_cstr_writer(CharT* dest, std::size_t len)
         : basic_outbuf<true, CharT>(dest, dest + len - 1)
     {
         BOOST_ASSERT(len != 0);
     }
 
     template <std::size_t N>
-    raw_string_writer(CharT (&dest)[N])
+    basic_cstr_writer(CharT (&dest)[N])
         : basic_outbuf<true, CharT>(dest, dest + N - 1)
     {
     }
@@ -411,6 +411,15 @@ private:
 
     CharT* _it;
 };
+
+#if defined(__cpp_char8_t)
+using u8cstr_writer = basic_cstr_writer<char8_t>;
+#endif
+using cstr_writer = basic_cstr_writer<char>;
+using u16cstr_writer = basic_cstr_writer<char16_t>;
+using u32cstr_writer = basic_cstr_writer<char32_t>;
+using wcstr_writer = basic_cstr_writer<wchar_t>;
+
 
 } // namespace outbuf
 } // namespace boost
