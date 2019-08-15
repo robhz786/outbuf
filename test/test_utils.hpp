@@ -110,15 +110,15 @@ std::basic_string<CharT> make_string(std::size_t size)
 template <typename CharT>
 inline std::basic_string<CharT> make_half_string()
 {
-    using obtype = boost::outbuf::basic_outbuf<false, CharT>;
-    return make_string<CharT>(obtype::min_size_after_recycle / 2);
+    constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
+    return make_string<CharT>(bufsize / 2);
 }
 
 template <typename CharT>
 inline std::basic_string<CharT> make_double_string()
 {
-    using obtype = boost::outbuf::basic_outbuf<false, CharT>;
-    return make_string<CharT>(2 * obtype::min_size_after_recycle);
+    constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
+    return make_string<CharT>(2 * bufsize);
 }
 
 template <typename CharT>

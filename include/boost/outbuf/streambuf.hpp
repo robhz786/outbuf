@@ -73,7 +73,7 @@ private:
     std::basic_streambuf<CharT, Traits>& _dest;
     std::streamsize _count = 0;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::basic_outbuf<false, CharT>::min_size_after_recycle;
+        = boost::outbuf::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 

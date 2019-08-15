@@ -69,7 +69,7 @@ private:
     std::FILE* _dest;
     std::size_t _count = 0;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::basic_outbuf<false, CharT>::min_size_after_recycle;
+        = boost::outbuf::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 
@@ -128,7 +128,7 @@ public:
     std::FILE* _dest;
     std::size_t _count = 0;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::basic_outbuf<false, wchar_t>::min_size_after_recycle;
+        = boost::outbuf::min_size_after_recycle<wchar_t>();
     wchar_t _buf[_buf_size];  
 };
 

@@ -35,6 +35,12 @@ using underlying_outbuf_char_type
 = typename detail::underlying_outbuf_char_type_impl<sizeof(CharT)>::type;
 
 template <typename CharT>
+constexpr std::size_t min_size_after_recycle()
+{
+    return 64;
+}
+
+template <typename CharT>
 class underlying_outbuf
 {
 public:
@@ -43,7 +49,6 @@ public:
                  , "Forbidden character type in underlying_outbuf" );
 
     using char_type = CharT;
-    static constexpr std::ptrdiff_t min_size_after_recycle = 64;
 
     underlying_outbuf(const underlying_outbuf&) = delete;
     underlying_outbuf(underlying_outbuf&&) = delete;
@@ -88,7 +93,7 @@ public:
     }
     void ensure(std::size_t s)
     {
-        BOOST_ASSERT(s <= min_size_after_recycle);
+        BOOST_ASSERT(s <= boost::outbuf::min_size_after_recycle<CharT>());
         if (pos() + s > end())
         {
             recycle();
@@ -123,13 +128,17 @@ private:
     friend class boost::outbuf::detail::outbuf_test_tool;
 };
 
+template <typename CharT>
+using get_underlying_outbuf
+    = boost::outbuf::underlying_outbuf
+          < boost::outbuf::underlying_outbuf_char_type<CharT> >;
+
 template <bool NoExcept, typename CharT>
 class basic_outbuf;
 
 template <typename CharT>
 class basic_outbuf<false, CharT>
-    : public boost::outbuf::underlying_outbuf
-        < boost::outbuf::underlying_outbuf_char_type<CharT> >
+    : public boost::outbuf::get_underlying_outbuf<CharT>
 {
     using _underlying_char_t = boost::outbuf::underlying_outbuf_char_type<CharT>;
     using _underlying_impl = boost::outbuf::underlying_outbuf<_underlying_char_t>;
@@ -327,11 +336,11 @@ public:
 inline char32_t* _outbuf_garbage_buf()
 {
     constexpr std::size_t s1
-        = (basic_outbuf<true, char>::min_size_after_recycle + 1) / 4;
+        = (boost::outbuf::min_size_after_recycle<char>() + 1) / 4;
     constexpr std::size_t s2
-        = (basic_outbuf<true, char16_t>::min_size_after_recycle + 1) / 2;
+        = (boost::outbuf::min_size_after_recycle<char16_t>() + 1) / 2;
     constexpr std::size_t s4
-        = basic_outbuf<true, char32_t>::min_size_after_recycle;
+        = boost::outbuf::min_size_after_recycle<char32_t>();
     constexpr std::size_t max_s1_s2 = s1 > s2 ? s1 : s2;
     constexpr std::size_t max_s1_s2_s4 = max_s1_s2 > s4 ? max_s1_s2 : s4;
 
@@ -351,7 +360,7 @@ template <typename CharT>
 inline CharT* outbuf_garbage_buf_end()
 {
     return boost::outbuf::outbuf_garbage_buf<CharT>()
-        + boost::outbuf::basic_outbuf<false, CharT>::min_size_after_recycle;
+        + boost::outbuf::min_size_after_recycle<CharT>();
 }
 
 template <typename CharT>

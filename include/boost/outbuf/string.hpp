@@ -62,7 +62,7 @@ public:
 private:
 
     static constexpr std::size_t _buf_size
-    = boost::outbuf::basic_outbuf<false, CharT>::min_size_after_recycle;
+        = boost::outbuf::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 
@@ -131,7 +131,7 @@ public:
 private:
 
     static constexpr std::size_t _buf_size
-        = boost::outbuf::basic_outbuf<true, CharT>::min_size_after_recycle;
+        = boost::outbuf::min_size_after_recycle<CharT>();
     std::exception_ptr _eptr = nullptr;
     CharT _buf[_buf_size];
 };
