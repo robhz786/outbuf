@@ -115,6 +115,13 @@ inline std::basic_string<CharT> make_half_string()
 }
 
 template <typename CharT>
+inline std::basic_string<CharT> make_full_string()
+{
+    constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
+    return make_string<CharT>(bufsize);
+}
+
+template <typename CharT>
 inline std::basic_string<CharT> make_double_string()
 {
     constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
@@ -128,10 +135,29 @@ std::basic_string<CharT> make_tiny_string()
 }
 
 template <typename CharT>
-inline void turn_into_bad(boost::outbuf::underlying_outbuf<CharT>& ob)
+inline void turn_into_bad(boost::outbuf::basic_outbuf<false, CharT>& ob)
 {
-    boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob);
+    boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
+template <typename CharT>
+inline void force_set_pos(boost::outbuf::basic_outbuf<false, CharT>& ob, CharT* pos)
+{
+    auto * upos = reinterpret_cast<boost::outbuf::underlying_outbuf_char_type<CharT>*>(pos);
+    boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
+}
+
+template <typename CharT>
+inline void turn_into_bad(boost::outbuf::basic_outbuf<true, CharT>& ob)
+{
+    boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
+}
+template <typename CharT>
+inline void force_set_pos(boost::outbuf::basic_outbuf<true, CharT>& ob, CharT* pos)
+{
+    auto * upos = reinterpret_cast<boost::outbuf::underlying_outbuf_char_type<CharT>*>(pos);
+    boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
+}
+
 
 } // namespace test_utils
 

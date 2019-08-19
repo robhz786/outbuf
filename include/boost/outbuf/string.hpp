@@ -26,7 +26,7 @@ public:
 
     string_writer_mixin() = default;
 
-    void do_recycle() noexcept
+    void do_recycle()
     {
         auto * p = static_cast<T*>(this)->pos();
         static_cast<T*>(this)->set_pos(_buf);
@@ -37,16 +37,22 @@ public:
             {
                 p = buf_end();
             }
-            static_cast<T*>(this)->_str.append(buf_begin(), p);
+            static_cast<T*>(this)->set_good(false);
+            static_cast<T*>(this)->_append(buf_begin(), p);
+            static_cast<T*>(this)->set_good(true);            
         }
     }
     void do_finish()
     {
-        if (static_cast<T*>(this)->good())
+        auto * p = static_cast<T*>(this)->pos();
+        if (p >= buf_begin() && static_cast<T*>(this)->good())
         {
-            auto p = static_cast<T*>(this)->pos();
+            if (p > buf_end())
+            {
+                p = buf_end();
+            }
             static_cast<T*>(this)->set_good(false);
-            static_cast<T*>(this)->_str.append(buf_begin(), p);
+            static_cast<T*>(this)->_append(buf_begin(), p);
         }
     }
 
@@ -88,7 +94,7 @@ public:
             }
             try
             {
-                static_cast<T*>(this)->_str.append(buf_begin(), p);
+                static_cast<T*>(this)->_append(buf_begin(), p);
             }
             catch(...)
             {
@@ -104,8 +110,14 @@ public:
         {
             std::rethrow_exception(_eptr);
         }
-        if (static_cast<T*>(this)->good())
+        BOOST_ASSERT(static_cast<T*>(this)->good());
+        auto * p = static_cast<T*>(this)->pos();
+        if (buf_begin() <= p)
         {
+            if (p > buf_end())
+            {
+                p = buf_end();
+            }
             static_cast<T*>(this)->set_good(false);
             auto p = static_cast<T*>(this)->pos();
             if (p >= buf_begin())
@@ -114,7 +126,7 @@ public:
                 {
                     p = buf_end();
                 }
-                static_cast<T*>(this)->_str.append(buf_begin(), p);
+                static_cast<T*>(this)->_append(buf_begin(), p);
             }
         }
     }
@@ -156,8 +168,6 @@ class basic_string_appender
     , private boost::outbuf::detail::string_writer_mixin
         < basic_string_appender<NoExcept, CharT, Traits>, NoExcept, CharT >
 {
-    template <typename> friend class detail::string_writer_mixin;
-
 public:
 
     using string_type = std::basic_string<CharT, Traits>;
@@ -184,6 +194,13 @@ public:
 
 private:
 
+    template <typename> friend class detail::string_writer_mixin;
+
+    void _append(const CharT* begin, const CharT* end)
+    {
+        _str.append(begin, end);
+    }
+    
     string_type& _str;
 };
 
@@ -195,8 +212,6 @@ class basic_string_maker
     , private boost::outbuf::detail::string_writer_mixin
         < basic_string_maker<NoExcept, CharT, Traits>, NoExcept, CharT >
 {
-    template <typename> friend class detail::string_writer_mixin;
-
 public:
 
     using string_type = std::basic_string<CharT, Traits>;
@@ -222,6 +237,13 @@ public:
     }
 
 private:
+
+    template <typename> friend class detail::string_writer_mixin;
+
+    void _append(const CharT* begin, const CharT* end)
+    {
+        _str.append(begin, end);
+    }
 
     string_type _str;
 };

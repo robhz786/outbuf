@@ -138,7 +138,7 @@ class basic_outbuf;
 
 template <typename CharT>
 class basic_outbuf<false, CharT>
-    : public boost::outbuf::get_underlying_outbuf<CharT>
+    : private boost::outbuf::get_underlying_outbuf<CharT>
 {
     using _underlying_char_t = boost::outbuf::underlying_outbuf_char_type<CharT>;
     using _underlying_impl = boost::outbuf::underlying_outbuf<_underlying_char_t>;
@@ -166,7 +166,20 @@ public:
     {
         _underlying_impl::advance_to(reinterpret_cast<_underlying_char_t*>(p));
     }
+    void advance(std::size_t n)
+    {
+        _underlying_impl::advance(n);
+    }    
+    _underlying_impl& as_underlying()
+    {
+        return *this;
+    }
 
+    using _underlying_impl::size;
+    using _underlying_impl::good;
+    using _underlying_impl::ensure;
+    using _underlying_impl::recycle;
+    
 protected:
 
     basic_outbuf(CharT* pos_, CharT* end_) noexcept
@@ -187,6 +200,7 @@ protected:
         _underlying_impl::set_end(reinterpret_cast<_underlying_char_t*>(e));
     }
 
+    using _underlying_impl::set_good;
 };
 
 template <typename CharT>
@@ -234,10 +248,9 @@ void puts_continuation
     }
 }
 
-} // namespace detail
 
 template <bool NoExcept, typename CharT>
-void puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
+void do_puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
          , const CharT* str
          , std::size_t len )
 {
@@ -254,40 +267,7 @@ void puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
 }
 
 template <bool NoExcept, typename CharT>
-void puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
-         , const CharT* str
-         , const CharT* str_end )
-{
-    BOOST_ASSERT(str_end >= str);
-    boost::outbuf::puts(ob, str, str_end - str);
-}
-
-inline void puts( boost::outbuf::basic_outbuf<true, char>& ob
-                , const char* str )
-{
-    boost::outbuf::puts<true, char>(ob, str, std::strlen(str));
-}
-
-inline void puts( boost::outbuf::basic_outbuf<false, char>& ob
-                , const char* str )
-{
-    boost::outbuf::puts<false, char>(ob, str, std::strlen(str));
-}
-
-inline void puts( boost::outbuf::basic_outbuf<true, wchar_t>& ob
-                , const wchar_t* str )
-{
-    boost::outbuf::puts<true, wchar_t>(ob, str, std::wcslen(str));
-}
-
-inline void puts( boost::outbuf::basic_outbuf<false, wchar_t>& ob
-                , const wchar_t* str )
-{
-    boost::outbuf::puts<false, wchar_t>(ob, str, std::wcslen(str));
-}
-
-template <bool NoExcept, typename CharT>
-void putc( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob, CharT c )
+void do_putc( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob, CharT c )
 {
     auto p = ob.pos();
     if (p != ob.end())
@@ -301,6 +281,79 @@ void putc( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob, CharT c )
         *ob.pos() = c;
         ob.advance();
     }
+}
+
+
+} // namespace detail
+
+template <typename CharT>
+inline void puts( boost::outbuf::basic_outbuf<true, CharT>& ob
+                , const CharT* str
+                , std::size_t len )
+{
+    boost::outbuf::detail::do_puts<true, CharT>(ob, str, len);
+}
+
+template <typename CharT>
+inline void puts( boost::outbuf::basic_outbuf<false, CharT>& ob
+                , const CharT* str
+                , std::size_t len )
+{
+    boost::outbuf::detail::do_puts<false, CharT>(ob, str, len);
+}
+
+template <typename CharT>
+inline void puts( boost::outbuf::basic_outbuf<true, CharT>& ob
+                , const CharT* str
+                , const CharT* str_end )
+{
+    BOOST_ASSERT(str_end >= str);
+    boost::outbuf::detail::do_puts<true, CharT>(ob, str, str_end - str);
+}
+
+template <typename CharT>
+inline void puts( boost::outbuf::basic_outbuf<false, CharT>& ob
+                , const CharT* str
+                , const CharT* str_end )
+{
+    BOOST_ASSERT(str_end >= str);
+    boost::outbuf::detail::do_puts<false, CharT>(ob, str, str_end - str);
+}
+
+inline void puts( boost::outbuf::basic_outbuf<true, char>& ob
+                , const char* str )
+{
+    boost::outbuf::detail::do_puts<true, char>(ob, str, std::strlen(str));
+}
+
+inline void puts( boost::outbuf::basic_outbuf<false, char>& ob
+                , const char* str )
+{
+    boost::outbuf::detail::do_puts<false, char>(ob, str, std::strlen(str));
+}
+
+inline void puts( boost::outbuf::basic_outbuf<true, wchar_t>& ob
+                , const wchar_t* str )
+{
+    boost::outbuf::detail::do_puts<true, wchar_t>(ob, str, std::wcslen(str));
+}
+
+inline void puts( boost::outbuf::basic_outbuf<false, wchar_t>& ob
+                , const wchar_t* str )
+{
+    boost::outbuf::detail::do_puts<false, wchar_t>(ob, str, std::wcslen(str));
+}
+
+template <typename CharT>
+inline void putc( boost::outbuf::basic_outbuf<true, CharT>& ob, CharT c )
+{
+    boost::outbuf::detail::do_puts<true, CharT>(ob, c);
+}
+
+template <typename CharT>
+inline void putc( boost::outbuf::basic_outbuf<false, CharT>& ob, CharT c )
+{
+    boost::outbuf::detail::do_puts<false, CharT>(ob, c);
 }
 
 // type aliases
@@ -330,6 +383,12 @@ public:
     {
         ob.set_good(false);
     }
+    template<typename CharT>
+    static void force_set_pos(underlying_outbuf<CharT>& ob, CharT* pos)
+    {
+        ob.set_pos(pos);
+    }
+    
 };
 
 
