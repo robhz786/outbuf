@@ -162,11 +162,14 @@ class string_writer_mixin<true, CharT>
 
 template < bool NoExcept
          , typename CharT
-         , typename Traits = std::char_traits<CharT> >
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
 class basic_string_appender
     : public boost::outbuf::basic_outbuf<NoExcept, CharT>
     , private boost::outbuf::detail::string_writer_mixin
-        < basic_string_appender<NoExcept, CharT, Traits>, NoExcept, CharT >
+        < basic_string_appender<NoExcept, CharT, Traits, Allocator>
+        , NoExcept
+        , CharT >
 {
 public:
 
@@ -206,11 +209,14 @@ private:
 
 template < bool NoExcept
          , typename CharT
-         , typename Traits = std::char_traits<CharT> >
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
 class basic_string_maker
     : public boost::outbuf::basic_outbuf<NoExcept, CharT>
     , private boost::outbuf::detail::string_writer_mixin
-        < basic_string_maker<NoExcept, CharT, Traits>, NoExcept, CharT >
+        < basic_string_maker<NoExcept, CharT, Traits, Allocator>
+        , NoExcept
+        , CharT >
 {
 public:
 

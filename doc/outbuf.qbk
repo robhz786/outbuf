@@ -35,90 +35,243 @@
 
 ]
 
-[section Rationale]
+[section Overview]
 
-In some environments heap allocation is to be avoided.
-So what if a function needs to return a string whose size and
-content is only evaluated at execution time ?
-Usually the solution is to make the caller to pass a buffer hoping it
-to be big enough. This library aims to bring a better solution.
-
-So let's consider a typical example: error messages.
-Suppose a function needs to access a file, and we want
-it to provide a detailed message when it fails:
+Suppose you are creating a library which you want be usable
+in the widest possible range of environments, including a
+bare-metal realtime system where heap allocation needs to be avoided.
+And suppode your API contains a function that returns/provides
+a string whose content and size is only determined at
+execution time. Since some environments can't use `std::string`,
+you probably make it write into a raw string, more or less like this:
 ``
-#include <boost/outbuf.hpp> // freestanding C++ header
-
-void do_something( /* params ... */, int& ec, boost::outbuf& err_msg)
-{
-    // ... do something ...
-    if( /* some error */)
-    {
-        ec = /*some error code*/;
-        puts(err_msg, "Could not open file: ");
-        puts(err_msg, filename);
-        //  and maybe add something else in the error message,
-        //  like of some parameters' value.
-        return;
-    }
-    // ...
-}
+  struct result{ char* it; bool truncated; };
+  result get_message(char* dest, std::size_t dest_len);
 ``
+However you know that this is not perfect since there is always the
+chance of the destination size being too small. Although such event
+can be reported as an error, there's nothing really effective the
+caller can do about.
 
-The caller is the one who decides where this message is written to,
-by instantiating a type that derives from the `outbuf` abstract class.
-If, for instance, heap allocation is not a problem and the caller
-wants a `std::string`, then:
+So the `basic_outbuf` abstract class template aims to be a better
+and universal solution. It provides an abstraction
+for output types, somehow like `std::basic_streambuf` but
+it only deals with output.
 
 ``
-#include <boost/outbuff/string.hpp> // not freestanding C++
+namespace boost {
+namespace outbuf {
 
-void some_context( /* params ... */)
-{
-    // ...
-    boost::string_maker err_msg;
-    int ec;
-    do_something( /* args...*/ ec, err_msg);
-    if (ec != 0)
-    {
-        std::string err_str = err_msg.finish();
-        // ...
-    }
-    // ...
-}
-``
-Or the caller could delegate such decision to a higher context.
-``
-void some_context( /*  params ... */, int& ec, boost::outbuf& err_msg)
-{
-    // ...
-    do_something( /* args...*/ ec, err_msg);
-    if (ec != 0)
-    {
-        puts(err_msg, "\n When doing such and such thing.")
-        return;
-        // ...
-    }
-    // ...
-}
-``
-And more and more contextual information can be added as
-we move upwards in the call stack. All that without worring
-about where or how these string are stored or sent.
-This concern belong to the code that chooses which derivation
-of `outbuf` is used.
+    template <bool NoExcept, typename CharT>
+    class basic_outbuf;
 
-The abstract class `outbuf` may resemble `std::streambuf`.
-But it has a simpler design and it is easier to implement
-a concrete subtype.
+    using outbuf    = basic_outbuf<false, char>;
+    using u8outbuf  = basic_outbuf<false, char8_t>;
+    using u16outbuf = basic_outbuf<false, char16_t>;
+    using u32outbuf = basic_outbuf<false, char32_t>;
+    using woutbuf   = basic_outbuf<false, wchar_t>;
+
+    using outbuf_noexcept    = basic_outbuf<true, char>;
+    using u8outbuf_noexcept  = basic_outbuf<true, char8_t>;
+    using u16outbuf_noexcept = basic_outbuf<true, char16_t>;
+    using u32outbuf_noexcept = basic_outbuf<true, char32_t>;
+    using woutbuf_noexcept   = basic_outbuf<true, wchar_t>;
+
+} // namespace outbuf
+} // namesapce boost
+``
+Instead of taking a `char*`, your function could take
+a `outbuf&`.
+
+``
+void get_message(boost::outbuf::outbuf& dest);
+``
+The caller is supposed to provide a suitable concrete derived type
+which will define where the content is sent to.
+Implementing one is easy. But it's also
+possible to pick one of the already available.
+For example, if in a certain use case heap allocation is not
+an issue, and the user just wants and can use `std::string`,
+then the he/she can use `string_maker`:
+
+  #include <boost/outbuff/string.hpp>
+
+  // ...
+      boost::outbuf::string_maker<false> msg;
+      get_message(msg)
+      std::string str = msg.finish();
+
+Or, if one wants it to write into a raw string and is not worried
+about it being trucanted, then:
+
+    char buff[buff_size];
+    boost::outbuf::cstr_writer<char> csw(buff, buff_size);
+    get_message(csw);
+    auto result = csw.finish();
+    if (result.truncated) {
+      // ...
+
+[/
+Those `finish` functions above do not belong to `basic_outbuf`.
+They are defined on the concrete derived types only.
+It's solely by convention that they share the same name.
+]
+However note that when we write into a `std::string` or `char*`,
+it is never the final destination, only an intermediate.
+In order to be usefull, the content has to be sent to somewhere else,
+like the console output, a log file, an LCD display, or whatever.
+So you might often consider to implement your own concrete subtype of
+`basic_outbuf` that writes directly into the final destination.
+
+[section Optionally `NoExcept`]
+
+Besides the destructor, `basic_outbuf` has only one virtual
+function: `recycle()`, which is pure virtual, and
+is declared as `noexcept(NoExcept)`.
+All other functions are guaranteed to not throw.
+Therefore, by having a `basic_outbuf<true, `[~char_type]`>&`
+as a parameter, instead of `basic_outbuf<false, `[~char_type]`>&`,
+a function states that the outbuf object must not throw.
+This is particularly important when such outbuf might come
+from another module and we must avoid exceptions crossing modules
+boundaries.
+
+On the other hand if the parameter is
+`basic_outbuf<false, `[~char_type]`>&`, then the caller can also
+pass a `basic_outbuf<true, `[~char_type]`>&`, because
+`basic_outbuf<true, `[~char_type]`>&` derives from
+`basic_outbuf<false, `[~char_type]`>&`.
+
+
+When using `string_maker` you can choose between the two kinds.
+`string_maker<true>` derives from `basic_outbuf<true, char>&`.
+So if any exception raises from its internal `std::string`,
+then it is caught by a try/catch(...) block, stored as
+an `exception_ptr` and rethrown by `finish()`. This has the
+undesirable effect of delaying its proper handling. After all,
+we rather stop what's being doing as soon as possible when
+an error appear. So it makes sense to use `string_maker<false>&`
+always when possible, and `string_maker<true>&` only if necessary.
+
+[endsect]
+[section Writting into an outbuf object]
+
+You can insert strings using the `puts` global function template.
+``
+  #include <boost/outbut.hpp>
+
+  void get_message(boost::outbuf::outbuf& dest)
+  {
+      puts(dest, "a string.\n");
+      puts(dest, "another string.\n");
+      puts(dest, "How may strings you want, of any length.");
+      // ...
+  }
+``
+Or can also create use an OutputIterator adapter, which enables you to use
+[@http://open-std.org/JTC1/SC22/WG21/docs/papers/2019/p0645r10.html
+`std::format`]
+``
+  #include <boost/outbut.hpp>
+  #include <format>
+
+  void get_message(boost::outbuf::outbuf& dest)
+  {
+      //
+      std::format_to(make_iterator(dest), "blah blah {}.", some_variable);
+      // ...
+  }
+``
+Or you can write directly into the buffer.
+``
+  #include <boost/outbut.hpp>
+
+  void get_message(boost::outbuf::outbuf& dest)
+  {
+      dest.ensure(5);
+      std::strcpy(dest.pos(), "Hello");
+      dest.avance(5);
+      // ...
+  }
+``
+The `advance` member function cause the buffer position ( the value
+returned by `pos()`) to be incremented.
+The `ensure` member function is just a syntatic sugar, the code above
+is equivalent to:
+``
+  #include <boost/outbut.hpp>
+
+  void get_message(boost::outbuf::outbuf& dest)
+  {
+      if (dest.end() - dest.pos() < 5)
+      {
+          dest.recycle();
+      }
+      std::strcpy(dest.pos(), "Hello");
+      dest.avance(5);
+      // ...
+  }
+``
+The `recycle` member function causes the content written in the buffer
+to be consumed and resets the buffer's begin and end. After `recycle` is
+called `dest.end() - dest.pos()` is guaranteed to be greater than or equal
+to the /constexpr/ value `boost::outbuf::min_size_after_recycle<char>()`,
+which is implementation-defined but is greater than or equal to `64`.
+
+The buffer ( the range \u005b`pos()`, `end()`) )
+is always a valid accessible memory area. So it is always safe to write
+things there. However, you should occasionally check whether the outbuf
+is in "good" state. You do that with the `good` member function.
+If it returns `false`, then it means that writing into the buffer has
+no relevant side effect and it is a mere waste of CPU resources.
+The state may change from good to bad when `recycle` is called.
+It never changes from bad to good.
 
 
 [endsect]
 
-[section Writing into a `basic_outbuf`]
+
+[section The `underlying_outbuf` class template]
+
+Suppose you want to implement a functions that converts UTF-32 to UTF-8,
+and you decide to use `basic_outbuf` to handle the output.
+Now you have to face dilemma of which output character type to use:
+``
+void utf32_to_utf8( boost::outbuf::basic_outbuf<false, /* ??? */>& destination
+                  , const char32_t* src
+                  , std::size_t src_size );
+``
+It could be `char`, `char8_t`, `std::byte`, or `unsigned char`
+(`basic_outbuf` can also be use to handle binary data, why not ? ).
+It would be better if we could leave the decision to the caller.
+So you could implement `utf32_to_utf8` as a template function but that may
+be undesirable, or impossible.
+
+That's the reason the `underlying_outbuf` class template exists.
+
+``
+void utf32_to_utf8( boost::outbuf::underlying_outbuf<std::uint8_t>& destination
+                  , const char32_t* src
+                  , std::size_t src_size );
+``
+There are only three character types that can instantiate `underlying_outbuf`:
+`std::uint8_t`, `char16_t` and `char32_t`. And `underlying_outbuf` is a private
+base of `basic_outbuf` and it has basically the same public interface.
+Just the character type may be different, but away with the same size.
+For example, `underlying_outbuf<std::uint8_t>` is a private base of
+`boost::outbuf::basic_outbuf<false, char_type>` for any `char_type` where
+`sizeof(char_type) == 1` is `true`. The inheritance is private only to
+prevent implicit reference cast. So one needs to call the function
+`as_underlying`:
+
+``
+const char32_t* src = /*...*/;
+std::size_t src_size = /*...*/;
+boost::outbuf::string_maker<false> str_maker;
+utf32_to_utf8(str_make.as_underlying(), src, src_size);
+``
+
 [endsect]
 
-[section Implementing an `outbuf`]
 [endsect]
-
 [include reference.qbk]

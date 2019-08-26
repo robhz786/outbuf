@@ -129,7 +129,7 @@ private:
 };
 
 template <typename CharT>
-using get_underlying_outbuf
+using underlying_outbuf_alias
     = boost::outbuf::underlying_outbuf
           < boost::outbuf::underlying_outbuf_char_type<CharT> >;
 
@@ -138,7 +138,7 @@ class basic_outbuf;
 
 template <typename CharT>
 class basic_outbuf<false, CharT>
-    : private boost::outbuf::get_underlying_outbuf<CharT>
+    : private boost::outbuf::underlying_outbuf_alias<CharT>
 {
     using _underlying_char_t = boost::outbuf::underlying_outbuf_char_type<CharT>;
     using _underlying_impl = boost::outbuf::underlying_outbuf<_underlying_char_t>;
