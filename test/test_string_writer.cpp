@@ -94,8 +94,11 @@ public:
 
     string_maker_that_throws()
         : boost::outbuf::basic_outbuf<NoExcept, CharT>
-            (this->buf_begin(), this->buf_end())
+            ( boost::outbuf::outbuf_garbage_buf<CharT>()
+            , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
     {
+        this->set_pos(this->buf_begin());
+        this->set_end(this->buf_end());
     }
 
     string_maker_that_throws(const string_maker_that_throws&) = delete;
@@ -120,7 +123,8 @@ public:
 
 private:
 
-    template <typename> friend class boost::outbuf::detail::string_writer_mixin;
+    template <typename, bool, typename>
+    friend class boost::outbuf::detail::string_writer_mixin;
 
     void _append(const CharT* begin, const CharT* end)
     {

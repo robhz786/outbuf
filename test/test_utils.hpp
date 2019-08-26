@@ -21,10 +21,10 @@ std::string unique_tmp_file_name()
 #if defined(_WIN32)
 
     char dirname[MAX_PATH];
-    auto dirlen = GetTempPathA(MAX_PATH, name);
+    auto dirlen = GetTempPathA(MAX_PATH, dirname);
     char fullname[MAX_PATH];
-    sprintf(fullname, "%s\\test_boost_outbuf_%x.txt", dirname, std::rand());
-   return fullname;
+    sprintf_s(fullname, MAX_PATH, "%s\\test_boost_outbuf_%x.txt", dirname, std::rand());
+    return fullname;
 
 #else // defined(_WIN32)
 

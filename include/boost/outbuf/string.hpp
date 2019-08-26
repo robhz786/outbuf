@@ -142,17 +142,17 @@ public:
 
 private:
 
+    std::exception_ptr _eptr = nullptr;
     static constexpr std::size_t _buf_size
         = boost::outbuf::min_size_after_recycle<CharT>();
-    std::exception_ptr _eptr = nullptr;
     CharT _buf[_buf_size];
 };
 
 #else // defined(__cpp_exceptions)
 
-template <bool NoExcept, typename CharT>
-class string_writer_mixin<true, CharT>
-    : public string_writer_mixin<false, CharT>
+template <typename T, typename CharT>
+class string_writer_mixin<T, true, CharT>
+    : public string_writer_mixin<T, false, CharT>
 {
 };
 
@@ -176,9 +176,13 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_appender(string_type& str_)
-        : basic_outbuf<NoExcept, CharT>(this->buf_begin(), this->buf_end())
+        : basic_outbuf<NoExcept, CharT>
+            ( boost::outbuf::outbuf_garbage_buf<CharT>()
+            , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
         , _str(str_)
     {
+        this->set_pos(this->buf_begin());
+        this->set_end(this->buf_end());
     }
     basic_string_appender() = delete;
     basic_string_appender(const basic_string_appender&) = delete;
@@ -197,7 +201,8 @@ public:
 
 private:
 
-    template <typename> friend class detail::string_writer_mixin;
+    template <typename, bool, typename>
+    friend class detail::string_writer_mixin;
 
     void _append(const CharT* begin, const CharT* end)
     {
@@ -223,8 +228,12 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_maker()
-        : basic_outbuf<NoExcept, CharT>(this->buf_begin(), this->buf_end())
+        : basic_outbuf<NoExcept, CharT>
+            ( boost::outbuf::outbuf_garbage_buf<CharT>()
+            , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
     {
+        this->set_pos(this->buf_begin());
+        this->set_end(this->buf_end());
     }
 
     basic_string_maker(const basic_string_maker&) = delete;
@@ -244,7 +253,8 @@ public:
 
 private:
 
-    template <typename> friend class detail::string_writer_mixin;
+    template <typename, bool, typename>
+    friend class detail::string_writer_mixin;
 
     void _append(const CharT* begin, const CharT* end)
     {
