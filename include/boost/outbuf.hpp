@@ -169,7 +169,7 @@ public:
     void advance(std::size_t n)
     {
         _underlying_impl::advance(n);
-    }    
+    }
     _underlying_impl& as_underlying()
     {
         return *this;
@@ -179,7 +179,7 @@ public:
     using _underlying_impl::good;
     using _underlying_impl::ensure;
     using _underlying_impl::recycle;
-    
+
 protected:
 
     basic_outbuf(CharT* pos_, CharT* end_) noexcept
@@ -378,6 +378,7 @@ namespace detail {
 class outbuf_test_tool
 {
 public:
+
     template<typename CharT>
     static void turn_into_bad(underlying_outbuf<CharT>& ob)
     {
@@ -388,7 +389,6 @@ public:
     {
         ob.set_pos(pos);
     }
-    
 };
 
 

@@ -83,16 +83,16 @@ void test_corrupted_pos_too_big_on_finish()
 }
 
 template <bool NoExcept, typename CharT>
-class string_maker_that_throws
+class string_maker_that_throws_impl
     : public boost::outbuf::basic_outbuf<NoExcept, CharT>
-    , private boost::outbuf::detail::string_writer_mixin
-        < string_maker_that_throws<NoExcept, CharT>, NoExcept, CharT >
+    , protected boost::outbuf::detail::string_writer_mixin
+        < string_maker_that_throws_impl<NoExcept, CharT>, NoExcept, CharT >
 {
 public:
 
     using string_type = std::basic_string<CharT>;
 
-    string_maker_that_throws()
+    string_maker_that_throws_impl()
         : boost::outbuf::basic_outbuf<NoExcept, CharT>
             ( boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
@@ -101,14 +101,14 @@ public:
         this->set_end(this->buf_end());
     }
 
-    string_maker_that_throws(const string_maker_that_throws&) = delete;
-    string_maker_that_throws(string_maker_that_throws&&) = delete;
-    ~string_maker_that_throws() = default;
+    string_maker_that_throws_impl(const string_maker_that_throws_impl&) = delete;
+    string_maker_that_throws_impl(string_maker_that_throws_impl&&) = delete;
+    ~string_maker_that_throws_impl() = default;
 
-    void recycle() noexcept(NoExcept) override
-    {
-        this->do_recycle();
-    }
+    // void recycle() noexcept(NoExcept) override
+    // {
+    //     this->do_recycle();
+    // }
 
     string_type finish()
     {
@@ -139,7 +139,32 @@ private:
     bool _throw = false;
 };
 
+template <bool NoExcept, typename CharT>
+class string_maker_that_throws;
 
+template <typename CharT>
+class string_maker_that_throws<true, CharT>
+    : public string_maker_that_throws_impl<true, CharT>
+{
+public:
+
+    void recycle() noexcept(true) override
+    {
+        this->do_recycle();
+    }
+};
+
+template <typename CharT>
+class string_maker_that_throws<false, CharT>
+    : public string_maker_that_throws_impl<false, CharT>
+{
+public:
+
+    void recycle() noexcept(false) override
+    {
+        this->do_recycle();
+    }
+};
 
 template <typename CharT>
 void test_recycle_catches_exception()

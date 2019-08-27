@@ -50,6 +50,29 @@ std::wstring read_wfile(std::FILE* file)
     return result;
 }
 
+std::wstring read_wfile(const char* filename)
+{
+    std::wstring result;
+
+#if defined(_WIN32)
+
+    std::FILE* file = NULL;
+    (void) fopen_s(&file, filename, "r");
+
+#else // defined(_WIN32)
+
+    std::FILE* file = std::fopen(filename, "r");
+
+#endif  // defined(_WIN32)
+
+    if(file != nullptr)
+    {
+        result = read_wfile(file);
+        fclose(file);
+    }
+    return result;
+}
+
 template <typename CharT>
 std::basic_string<CharT> read_file(std::FILE* file)
 {
@@ -72,9 +95,18 @@ std::basic_string<CharT> read_file(const char* filename)
 {
     std::basic_string<CharT> result;
 
-    std::FILE* file = nullptr;
+#if defined(_WIN32)
 
-    file = filename == nullptr ? nullptr : std::fopen(filename, "r");
+    std::FILE* file = nullptr;
+    (void) fopen_s(&file, filename, "r");
+
+#else // defined(_WIN32)
+
+    std::FILE* file = std::fopen(filename, "r");
+
+#endif  // defined(_WIN32)
+
+
     if(file != nullptr)
     {
         result = read_file<CharT>(file);

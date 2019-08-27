@@ -39,7 +39,7 @@ public:
             }
             static_cast<T*>(this)->set_good(false);
             static_cast<T*>(this)->_append(buf_begin(), p);
-            static_cast<T*>(this)->set_good(true);            
+            static_cast<T*>(this)->set_good(true);
         }
     }
     void do_finish()
@@ -158,16 +158,14 @@ class string_writer_mixin<T, true, CharT>
 
 #endif // defined(__cpp_exceptions)
 
-} // namespace detail
-
 template < bool NoExcept
          , typename CharT
-         , typename Traits = std::char_traits<CharT>
-         , typename Allocator = std::allocator<CharT> >
-class basic_string_appender
+         , typename Traits
+         , typename Allocator >
+class basic_string_appender_impl
     : public boost::outbuf::basic_outbuf<NoExcept, CharT>
-    , private boost::outbuf::detail::string_writer_mixin
-        < basic_string_appender<NoExcept, CharT, Traits, Allocator>
+    , protected boost::outbuf::detail::string_writer_mixin
+        < basic_string_appender_impl<NoExcept, CharT, Traits, Allocator>
         , NoExcept
         , CharT >
 {
@@ -175,7 +173,7 @@ public:
 
     using string_type = std::basic_string<CharT, Traits>;
 
-    basic_string_appender(string_type& str_)
+    basic_string_appender_impl(string_type& str_)
         : basic_outbuf<NoExcept, CharT>
             ( boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
@@ -184,15 +182,15 @@ public:
         this->set_pos(this->buf_begin());
         this->set_end(this->buf_end());
     }
-    basic_string_appender() = delete;
-    basic_string_appender(const basic_string_appender&) = delete;
-    basic_string_appender(basic_string_appender&&) = delete;
-    ~basic_string_appender() = default;
+    basic_string_appender_impl() = delete;
+    basic_string_appender_impl(const basic_string_appender_impl&) = delete;
+    basic_string_appender_impl(basic_string_appender_impl&&) = delete;
+    ~basic_string_appender_impl() = default;
 
-    void recycle() noexcept(NoExcept) override
-    {
-        this->do_recycle();
-    }
+    // void recycle() noexcept(NoExcept) override // MSVC does't like this
+    // {
+    //     this->do_recycle();
+    // }
 
     void finish()
     {
@@ -208,18 +206,18 @@ private:
     {
         _str.append(begin, end);
     }
-    
+
     string_type& _str;
 };
 
 template < bool NoExcept
          , typename CharT
-         , typename Traits = std::char_traits<CharT>
-         , typename Allocator = std::allocator<CharT> >
-class basic_string_maker
+         , typename Traits
+         , typename Allocator >
+class basic_string_maker_impl
     : public boost::outbuf::basic_outbuf<NoExcept, CharT>
-    , private boost::outbuf::detail::string_writer_mixin
-        < basic_string_maker<NoExcept, CharT, Traits, Allocator>
+    , protected boost::outbuf::detail::string_writer_mixin
+        < basic_string_maker_impl<NoExcept, CharT, Traits, Allocator>
         , NoExcept
         , CharT >
 {
@@ -227,7 +225,7 @@ public:
 
     using string_type = std::basic_string<CharT, Traits>;
 
-    basic_string_maker()
+    basic_string_maker_impl()
         : basic_outbuf<NoExcept, CharT>
             ( boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
@@ -236,14 +234,9 @@ public:
         this->set_end(this->buf_end());
     }
 
-    basic_string_maker(const basic_string_maker&) = delete;
-    basic_string_maker(basic_string_maker&&) = delete;
-    ~basic_string_maker() = default;
-
-    void recycle() noexcept(NoExcept) override
-    {
-        this->do_recycle();
-    }
+    basic_string_maker_impl(const basic_string_maker_impl&) = delete;
+    basic_string_maker_impl(basic_string_maker_impl&&) = delete;
+    ~basic_string_maker_impl() = default;
 
     string_type finish()
     {
@@ -262,6 +255,96 @@ private:
     }
 
     string_type _str;
+};
+
+
+
+} // namespace detail
+
+template < bool NoExcept
+         , typename CharT
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
+class basic_string_appender;
+
+template < bool NoExcept
+         , typename CharT
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
+class basic_string_maker;
+
+// Visual Studio forced me to create these template specializations
+
+template < typename CharT
+         , typename Traits
+         , typename Allocator >
+class basic_string_appender<true, CharT, Traits, Allocator>
+    : public boost::outbuf::detail::basic_string_appender_impl
+        < true, CharT, Traits, Allocator >
+{
+public:
+
+    using boost::outbuf::detail::basic_string_appender_impl
+        < true, CharT, Traits, Allocator >
+        ::basic_string_appender_impl;
+
+    void recycle() noexcept(true) override
+    {
+        this->do_recycle();
+    }
+};
+
+template < typename CharT
+         , typename Traits
+         , typename Allocator >
+class basic_string_appender<false, CharT, Traits, Allocator>
+    : public boost::outbuf::detail::basic_string_appender_impl
+        < false, CharT, Traits, Allocator >
+{
+public:
+
+    using boost::outbuf::detail::basic_string_appender_impl
+        < false, CharT, Traits, Allocator >
+        ::basic_string_appender_impl;
+
+    void recycle() noexcept(false) override
+    {
+        this->do_recycle();
+    }
+};
+
+template <typename CharT, typename Traits, typename Allocator>
+class basic_string_maker<true, CharT, Traits, Allocator>
+    : public boost::outbuf::detail::basic_string_maker_impl
+        < true, CharT, Traits, Allocator >
+{
+public:
+
+    using boost::outbuf::detail::basic_string_maker_impl
+        < true, CharT, Traits, Allocator >
+        ::basic_string_maker_impl;
+
+    void recycle() noexcept(true) override
+    {
+        this->do_recycle();
+    }
+};
+
+template <typename CharT, typename Traits, typename Allocator>
+class basic_string_maker<false, CharT, Traits, Allocator>
+    : public boost::outbuf::detail::basic_string_maker_impl
+        < false, CharT, Traits, Allocator >
+{
+public:
+
+    using boost::outbuf::detail::basic_string_maker_impl
+        < false, CharT, Traits, Allocator >
+        ::basic_string_maker_impl;
+
+    void recycle() noexcept(false) override
+    {
+        this->do_recycle();
+    }
 };
 
 template <bool NoExcept>

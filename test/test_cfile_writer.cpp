@@ -2,6 +2,8 @@
 //  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <boost/core/lightweight_test.hpp>
 #include <boost/outbuf/cfile.hpp>
 #include <ctime>
@@ -14,7 +16,7 @@ void test_narrow_successfull_writing()
 {
     auto tiny_str = test_utils::make_tiny_string<CharT>();
     auto double_str = test_utils::make_double_string<CharT>();
-    
+
     std::FILE* file = std::tmpfile();
     boost::outbuf::narrow_cfile_writer<CharT> writer(file);
     auto expected_content = tiny_str + double_str;
@@ -36,7 +38,7 @@ void test_wide_successfull_writing()
 {
     auto tiny_str = test_utils::make_tiny_string<wchar_t>();
     auto double_str = test_utils::make_double_string<wchar_t>();
-    
+
     std::FILE* file = std::tmpfile();
     boost::outbuf::wide_cfile_writer writer(file);
     auto expected_content = tiny_str + double_str;
@@ -51,7 +53,7 @@ void test_wide_successfull_writing()
 
     BOOST_TEST(status.success);
     BOOST_TEST_EQ(status.count, obtained_content.size());
-    BOOST_TEST(obtained_content == expected_content); 
+    BOOST_TEST(obtained_content == expected_content);
 }
 
 template <typename CharT>
@@ -62,11 +64,11 @@ void test_narrow_failing_to_recycle()
     auto expected_content = half_str;
 
     auto path = test_utils::unique_tmp_file_name();
-    std::FILE* file = std::fopen(path.c_str(), "wb");
+    std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::narrow_cfile_writer<CharT> writer(file);
 
     puts(writer, half_str.data(), half_str.size());
-    writer.recycle(); // first recycle works
+    writer.recycle(); // first recycle shall work
     test_utils::turn_into_bad(writer);
     puts(writer, double_str.data(), double_str.size());
 
@@ -84,10 +86,10 @@ void test_wide_failing_to_recycle()
 {
     auto half_str = test_utils::make_half_string<wchar_t>();
     auto double_str = test_utils::make_double_string<wchar_t>();
-    auto expected_content = test_utils::make_half_string<char>();
+    auto expected_content = test_utils::make_half_string<wchar_t>();
 
     auto path = test_utils::unique_tmp_file_name();
-    std::FILE* file = std::fopen(path.c_str(), "wb");
+    std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::wide_cfile_writer writer(file);
 
     puts(writer, half_str.data(), half_str.size());
@@ -97,7 +99,7 @@ void test_wide_failing_to_recycle()
 
     auto status = writer.finish();
     std::fclose(file);
-    auto obtained_content = test_utils::read_file<char>(path.c_str());
+    auto obtained_content = test_utils::read_wfile(path.c_str());
     std::remove(path.c_str());
 
     BOOST_TEST(! status.success);
@@ -114,7 +116,7 @@ void test_narrow_failing_to_finish()
     auto expected_content = double_str;
 
     auto path = test_utils::unique_tmp_file_name();
-    std::FILE* file = std::fopen(path.c_str(), "wb");
+    std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::narrow_cfile_writer<CharT> writer(file);
 
     puts(writer, double_str.data(), double_str.size());
@@ -139,7 +141,7 @@ void test_wide_failing_to_finish()
     auto expected_content = test_utils::make_double_string<char>();
 
     auto path = test_utils::unique_tmp_file_name();
-    std::FILE* file = std::fopen(path.c_str(), "wb");
+    std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::wide_cfile_writer writer(file);
 
     puts(writer, double_str.data(), double_str.size());
@@ -159,8 +161,8 @@ void test_wide_failing_to_finish()
 
 int main()
 {
-    std::srand(std::time(nullptr));
-    
+    std::srand(static_cast<unsigned>(std::time(nullptr)));
+
     test_narrow_successfull_writing<char>();
     test_narrow_successfull_writing<char16_t>();
     test_narrow_successfull_writing<char32_t>();
@@ -179,6 +181,6 @@ int main()
     test_wide_successfull_writing();
     test_wide_failing_to_recycle();
     test_wide_failing_to_finish();
-    
+
     return boost::report_errors();
 }
