@@ -35,7 +35,7 @@ public:
     {
     }
 
-    void recycle()
+    void recycle() override
     {
         std::streamsize count = this->pos() - _buf;
         this->set_pos(_buf);
