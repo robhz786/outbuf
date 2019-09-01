@@ -488,6 +488,27 @@ using u16cstr_writer = basic_cstr_writer<char16_t>;
 using u32cstr_writer = basic_cstr_writer<char32_t>;
 using wcstr_writer = basic_cstr_writer<wchar_t>;
 
+template <typename CharT>
+class discarded_outbuf final
+    : public boost::outbuf::basic_outbuf<true, CharT>
+{
+public:
+
+    discarded_outbuf()
+        : basic_outbuf<true, CharT>
+            { boost::outbuf::outbuf_garbage_buf<CharT>()
+            , boost::outbuf::outbuf_garbage_buf_end<CharT>() }
+    {
+        this->set_good(false);
+    }
+
+    ~discarded_outbuf() = default;
+
+    void recycle() noexcept override
+    {
+        this->set_pos(boost::outbuf::outbuf_garbage_buf<CharT>());
+    }
+};
 
 } // namespace outbuf
 } // namespace boost

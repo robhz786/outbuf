@@ -9,6 +9,7 @@ project libs/outbuf/test
     ;
 
 test-suite outbuf :
+    [ run basic_tests.cpp ]
     [ run test_cstr_writer.cpp ]
     [ run test_string_writer.cpp ]
     [ run test_streambuf_writer.cpp ]
