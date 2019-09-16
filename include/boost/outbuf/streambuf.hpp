@@ -17,12 +17,12 @@ namespace outbuf {
 
 template <typename CharT, typename Traits = std::char_traits<CharT> >
 class basic_streambuf_writer final
-    : public boost::outbuf::basic_outbuf<false, CharT>
+    : public boost::outbuf::basic_outbuf<CharT>
 {
 public:
 
     explicit basic_streambuf_writer(std::basic_streambuf<CharT, Traits>& dest_)
-        : boost::outbuf::basic_outbuf<false, CharT>(_buf, _buf_size)
+        : boost::outbuf::basic_outbuf<CharT>(_buf, _buf_size)
         , _dest(dest_)
     {
     }
@@ -78,12 +78,12 @@ private:
 };
 
 // template <typename CharT, typename Traits>
-// class basic_streambuf_writer<true, CharT, Traits> final
+// class basic_streambuf_writer_noexcept final
 //     : public boost::outbuf::basic_outbuf<true, CharT>
 // {
 // public:
 
-//     explicit basic_streambuf_writer(std::basic_streambuf<CharT, Traits>& dest_)
+//     explicit basic_streambuf_writer_noexcept(std::basic_streambuf<CharT, Traits>& dest_)
 //         : boost::outbuf::basic_outbuf<true, CharT>(_buf, _buf_size)
 //         , _dest(dest_)
 //     {

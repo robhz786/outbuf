@@ -133,11 +133,11 @@ using underlying_outbuf_alias
     = boost::outbuf::underlying_outbuf
           < boost::outbuf::underlying_outbuf_char_type<CharT> >;
 
-template <bool NoExcept, typename CharT>
+template <typename CharT>
 class basic_outbuf;
 
 template <typename CharT>
-class basic_outbuf<false, CharT>
+class basic_outbuf
     : private boost::outbuf::underlying_outbuf_alias<CharT>
 {
     using _underlying_char_t = boost::outbuf::underlying_outbuf_char_type<CharT>;
@@ -204,7 +204,7 @@ protected:
 };
 
 template <typename CharT>
-class basic_outbuf<true, CharT>: public basic_outbuf<false, CharT>
+class basic_outbuf_noexcept: public basic_outbuf<CharT>
 {
 public:
 
@@ -212,16 +212,36 @@ public:
 
 protected:
 
-    using basic_outbuf<false, CharT>::basic_outbuf;
+    using basic_outbuf<CharT>::basic_outbuf;
 };
 
 // global functions
 
 namespace  detail{
 
+template <bool NoExcept, typename CharT>
+struct basic_outbuf_noexcept_switch_impl;
+
+template <typename CharT>
+struct basic_outbuf_noexcept_switch_impl<false, CharT>
+{
+    using type = boost::outbuf::basic_outbuf<CharT>;
+};
+
+template <typename CharT>
+struct basic_outbuf_noexcept_switch_impl<true, CharT>
+{
+    using type = boost::outbuf::basic_outbuf_noexcept<CharT>;
+};
+
+template <bool NoExcept, typename CharT>
+using basic_outbuf_noexcept_switch
+    = typename basic_outbuf_noexcept_switch_impl<NoExcept, CharT>
+   :: type;
+
 template<bool NoExcept, typename CharT>
 void puts_continuation
-    ( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
+    ( boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>& ob
     , const CharT* str
     , std::size_t len )
 {
@@ -250,9 +270,9 @@ void puts_continuation
 
 
 template <bool NoExcept, typename CharT>
-void do_puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
-         , const CharT* str
-         , std::size_t len )
+void do_puts( boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>& ob
+            , const CharT* str
+            , std::size_t len )
 {
     auto p = ob.pos();
     if (p + len <= ob.end()) // the common case
@@ -267,7 +287,8 @@ void do_puts( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob
 }
 
 template <bool NoExcept, typename CharT>
-void do_putc( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob, CharT c )
+void do_putc( boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>& ob
+            , CharT c )
 {
     auto p = ob.pos();
     if (p != ob.end())
@@ -287,7 +308,7 @@ void do_putc( boost::outbuf::basic_outbuf<NoExcept, CharT>& ob, CharT c )
 } // namespace detail
 
 template <typename CharT>
-inline void puts( boost::outbuf::basic_outbuf<true, CharT>& ob
+inline void puts( boost::outbuf::basic_outbuf_noexcept<CharT>& ob
                 , const CharT* str
                 , std::size_t len )
 {
@@ -295,7 +316,7 @@ inline void puts( boost::outbuf::basic_outbuf<true, CharT>& ob
 }
 
 template <typename CharT>
-inline void puts( boost::outbuf::basic_outbuf<false, CharT>& ob
+inline void puts( boost::outbuf::basic_outbuf<CharT>& ob
                 , const CharT* str
                 , std::size_t len )
 {
@@ -303,7 +324,7 @@ inline void puts( boost::outbuf::basic_outbuf<false, CharT>& ob
 }
 
 template <typename CharT>
-inline void puts( boost::outbuf::basic_outbuf<true, CharT>& ob
+inline void puts( boost::outbuf::basic_outbuf_noexcept<CharT>& ob
                 , const CharT* str
                 , const CharT* str_end )
 {
@@ -312,7 +333,7 @@ inline void puts( boost::outbuf::basic_outbuf<true, CharT>& ob
 }
 
 template <typename CharT>
-inline void puts( boost::outbuf::basic_outbuf<false, CharT>& ob
+inline void puts( boost::outbuf::basic_outbuf<CharT>& ob
                 , const CharT* str
                 , const CharT* str_end )
 {
@@ -320,38 +341,38 @@ inline void puts( boost::outbuf::basic_outbuf<false, CharT>& ob
     boost::outbuf::detail::do_puts<false, CharT>(ob, str, str_end - str);
 }
 
-inline void puts( boost::outbuf::basic_outbuf<true, char>& ob
+inline void puts( boost::outbuf::basic_outbuf_noexcept<char>& ob
                 , const char* str )
 {
     boost::outbuf::detail::do_puts<true, char>(ob, str, std::strlen(str));
 }
 
-inline void puts( boost::outbuf::basic_outbuf<false, char>& ob
+inline void puts( boost::outbuf::basic_outbuf<char>& ob
                 , const char* str )
 {
     boost::outbuf::detail::do_puts<false, char>(ob, str, std::strlen(str));
 }
 
-inline void puts( boost::outbuf::basic_outbuf<true, wchar_t>& ob
+inline void puts( boost::outbuf::basic_outbuf_noexcept<wchar_t>& ob
                 , const wchar_t* str )
 {
     boost::outbuf::detail::do_puts<true, wchar_t>(ob, str, std::wcslen(str));
 }
 
-inline void puts( boost::outbuf::basic_outbuf<false, wchar_t>& ob
+inline void puts( boost::outbuf::basic_outbuf<wchar_t>& ob
                 , const wchar_t* str )
 {
     boost::outbuf::detail::do_puts<false, wchar_t>(ob, str, std::wcslen(str));
 }
 
 template <typename CharT>
-inline void putc( boost::outbuf::basic_outbuf<true, CharT>& ob, CharT c )
+inline void putc( boost::outbuf::basic_outbuf_noexcept<CharT>& ob, CharT c )
 {
     boost::outbuf::detail::do_puts<true, CharT>(ob, c);
 }
 
 template <typename CharT>
-inline void putc( boost::outbuf::basic_outbuf<false, CharT>& ob, CharT c )
+inline void putc( boost::outbuf::basic_outbuf<CharT>& ob, CharT c )
 {
     boost::outbuf::detail::do_puts<false, CharT>(ob, c);
 }
@@ -359,19 +380,19 @@ inline void putc( boost::outbuf::basic_outbuf<false, CharT>& ob, CharT c )
 // type aliases
 
 #if defined(__cpp_char8_t)
-using u8outbuf  = basic_outbuf<false, char8_t>;
-using u8outbuf_noexcept  = basic_outbuf<true, char8_t>;
+using u8outbuf  = basic_outbuf<char8_t>;
+using u8outbuf_noexcept  = basic_outbuf_noexcept<char8_t>;
 #endif
 
-using outbuf    = basic_outbuf<false, char>;
-using u26outbuf = basic_outbuf<false, char16_t>;
-using u32outbuf = basic_outbuf<false, char32_t>;
-using woutbuf   = basic_outbuf<false, wchar_t>;
+using outbuf    = basic_outbuf<char>;
+using u26outbuf = basic_outbuf<char16_t>;
+using u32outbuf = basic_outbuf<char32_t>;
+using woutbuf   = basic_outbuf<wchar_t>;
 
-using outbuf_noexcept    = basic_outbuf<true, char>;
-using u26outbuf_noexcept = basic_outbuf<true, char16_t>;
-using u32outbuf_noexcept = basic_outbuf<true, char32_t>;
-using woutbuf_noexcept   = basic_outbuf<true, wchar_t>;
+using outbuf_noexcept    = basic_outbuf_noexcept<char>;
+using u26outbuf_noexcept = basic_outbuf_noexcept<char16_t>;
+using u32outbuf_noexcept = basic_outbuf_noexcept<char32_t>;
+using woutbuf_noexcept   = basic_outbuf_noexcept<wchar_t>;
 
 namespace detail {
 
@@ -423,25 +444,25 @@ inline CharT* outbuf_garbage_buf_end()
 }
 
 template <typename CharT>
-class basic_cstr_writer final: public boost::outbuf::basic_outbuf<true, CharT>
+class basic_cstr_writer final: public boost::outbuf::basic_outbuf_noexcept<CharT>
 {
 public:
 
     basic_cstr_writer(CharT* dest, CharT* dest_end)
-        : basic_outbuf<true, CharT>(dest, dest_end - 1)
+        : basic_outbuf_noexcept<CharT>(dest, dest_end - 1)
     {
         BOOST_ASSERT(dest < dest_end);
     }
 
     basic_cstr_writer(CharT* dest, std::size_t len)
-        : basic_outbuf<true, CharT>(dest, dest + len - 1)
+        : basic_outbuf_noexcept<CharT>(dest, dest + len - 1)
     {
         BOOST_ASSERT(len != 0);
     }
 
     template <std::size_t N>
     basic_cstr_writer(CharT (&dest)[N])
-        : basic_outbuf<true, CharT>(dest, dest + N - 1)
+        : basic_outbuf_noexcept<CharT>(dest, dest + N - 1)
     {
     }
 
@@ -490,12 +511,12 @@ using wcstr_writer = basic_cstr_writer<wchar_t>;
 
 template <typename CharT>
 class discarded_outbuf final
-    : public boost::outbuf::basic_outbuf<true, CharT>
+    : public boost::outbuf::basic_outbuf_noexcept<CharT>
 {
 public:
 
     discarded_outbuf()
-        : basic_outbuf<true, CharT>
+        : basic_outbuf_noexcept<CharT>
             { boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() }
     {

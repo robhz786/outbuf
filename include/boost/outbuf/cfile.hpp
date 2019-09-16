@@ -12,12 +12,12 @@ namespace boost {
 namespace outbuf {
 
 template <typename CharT>
-class narrow_cfile_writer final: public boost::outbuf::basic_outbuf<false, CharT>
+class narrow_cfile_writer final: public boost::outbuf::basic_outbuf_noexcept<CharT>
 {
 public:
 
     explicit narrow_cfile_writer(std::FILE* dest_)
-        : boost::outbuf::basic_outbuf<false, CharT>(_buf, _buf_size)
+        : boost::outbuf::basic_outbuf_noexcept<CharT>(_buf, _buf_size)
         , _dest(dest_)
     {
         BOOST_ASSERT(dest_ != nullptr);
@@ -31,7 +31,7 @@ public:
     {
     }
 
-    void recycle()
+    void recycle() noexcept
     {
         auto p = this->pos();
         this->set_pos(_buf);
@@ -73,12 +73,12 @@ private:
     CharT _buf[_buf_size];
 };
 
-class wide_cfile_writer final: public boost::outbuf::basic_outbuf<false, wchar_t>
+class wide_cfile_writer final: public boost::outbuf::basic_outbuf_noexcept<wchar_t>
 {
 public:
 
     explicit wide_cfile_writer(std::FILE* dest_)
-        : boost::outbuf::basic_outbuf<false, wchar_t>(_buf, _buf_size)
+        : boost::outbuf::basic_outbuf_noexcept<wchar_t>(_buf, _buf_size)
         , _dest(dest_)
     {
         BOOST_ASSERT(dest_ != nullptr);
@@ -92,7 +92,7 @@ public:
     {
     }
 
-    void recycle()
+    void recycle() noexcept
     {
         auto p = this->pos();
         this->set_pos(_buf);

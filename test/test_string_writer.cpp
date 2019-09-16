@@ -6,6 +6,20 @@
 #include <boost/outbuf/string.hpp>
 #include "test_utils.hpp"
 
+template <bool NoExcept, typename CharT >
+using string_maker = typename std::conditional
+    < NoExcept
+    , boost::outbuf::basic_string_maker_noexcept<CharT>
+    , boost::outbuf::basic_string_maker<CharT> >
+    :: type;
+
+template <bool NoExcept, typename CharT >
+using string_appender = typename std::conditional
+    < NoExcept
+    , boost::outbuf::basic_string_appender_noexcept<CharT>
+    , boost::outbuf::basic_string_appender<CharT> >
+    :: type;
+
 template <bool NoExcept, typename CharT>
 void test_successfull_append()
 {
@@ -14,7 +28,7 @@ void test_successfull_append()
     auto expected_content = tiny_str + double_str;
 
     std::basic_string<CharT> str;
-    boost::outbuf::basic_string_appender<NoExcept, CharT> ob(str);
+    string_appender<NoExcept, CharT> ob(str);
     puts(ob, tiny_str.c_str(), tiny_str.size());
     puts(ob, double_str.c_str(), double_str.size());
     ob.finish();
@@ -28,7 +42,7 @@ void test_successfull_make()
     auto double_str = test_utils::make_double_string<CharT>();
     auto expected_content = tiny_str + double_str;
 
-    boost::outbuf::basic_string_maker<NoExcept, CharT> ob;
+    string_maker<NoExcept, CharT> ob;
     puts(ob, tiny_str.c_str(), tiny_str.size());
     puts(ob, double_str.c_str(), double_str.size());
     BOOST_TEST(ob.finish() == expected_content);
@@ -37,7 +51,7 @@ void test_successfull_make()
 template <bool NoExcept, typename CharT>
 void test_corrupted_pos_too_small_on_recycle()
 {
-    boost::outbuf::basic_string_maker<NoExcept, CharT> ob;
+    string_maker<NoExcept, CharT> ob;
     const auto bufsize = ob.size();
     auto double_str = test_utils::make_string<CharT>(bufsize * 2);
     auto half_str = test_utils::make_string<CharT>(bufsize / 2);
@@ -51,7 +65,7 @@ void test_corrupted_pos_too_small_on_recycle()
 template <bool NoExcept, typename CharT>
 void test_corrupted_pos_too_big_on_recycle()
 {
-    boost::outbuf::basic_string_maker<NoExcept, CharT> ob;
+    string_maker<NoExcept, CharT> ob;
     auto str = test_utils::make_string<CharT>(ob.size());
     std::char_traits<CharT>::copy(ob.pos(), str.data(), str.size());
     test_utils::force_set_pos(ob, ob.end() + 1);
@@ -62,7 +76,7 @@ void test_corrupted_pos_too_big_on_recycle()
 template <bool NoExcept, typename CharT>
 void test_corrupted_pos_too_small_on_finish()
 {
-    boost::outbuf::basic_string_maker<NoExcept, CharT> ob;
+    string_maker<NoExcept, CharT> ob;
     const auto bufsize = ob.size();
     auto double_str = test_utils::make_double_string<CharT>();
     auto half_str = test_utils::make_half_string<CharT>();
@@ -75,7 +89,7 @@ void test_corrupted_pos_too_small_on_finish()
 template <bool NoExcept, typename CharT>
 void test_corrupted_pos_too_big_on_finish()
 {
-    boost::outbuf::basic_string_maker<NoExcept, CharT> ob;
+    string_maker<NoExcept, CharT> ob;
     auto str = test_utils::make_string<CharT>(ob.size());
     std::char_traits<CharT>::copy(ob.pos(), str.data(), str.size());
     test_utils::force_set_pos(ob, ob.end() + 1);
@@ -84,7 +98,7 @@ void test_corrupted_pos_too_big_on_finish()
 
 template <bool NoExcept, typename CharT>
 class string_maker_that_throws_impl
-    : public boost::outbuf::basic_outbuf<NoExcept, CharT>
+    : public boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
     , protected boost::outbuf::detail::string_writer_mixin
         < string_maker_that_throws_impl<NoExcept, CharT>, NoExcept, CharT >
 {
@@ -93,7 +107,7 @@ public:
     using string_type = std::basic_string<CharT>;
 
     string_maker_that_throws_impl()
-        : boost::outbuf::basic_outbuf<NoExcept, CharT>
+        : boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
             ( boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
     {
@@ -104,11 +118,6 @@ public:
     string_maker_that_throws_impl(const string_maker_that_throws_impl&) = delete;
     string_maker_that_throws_impl(string_maker_that_throws_impl&&) = delete;
     ~string_maker_that_throws_impl() = default;
-
-    // void recycle() noexcept(NoExcept) override
-    // {
-    //     this->do_recycle();
-    // }
 
     string_type finish()
     {
@@ -148,7 +157,7 @@ class string_maker_that_throws<true, CharT>
 {
 public:
 
-    void recycle() noexcept(true) override
+    void recycle() noexcept override
     {
         this->do_recycle();
     }
@@ -160,7 +169,7 @@ class string_maker_that_throws<false, CharT>
 {
 public:
 
-    void recycle() noexcept(false) override
+    void recycle() override
     {
         this->do_recycle();
     }

@@ -163,7 +163,7 @@ template < bool NoExcept
          , typename Traits
          , typename Allocator >
 class basic_string_appender_impl
-    : public boost::outbuf::basic_outbuf<NoExcept, CharT>
+    : public boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
     , protected boost::outbuf::detail::string_writer_mixin
         < basic_string_appender_impl<NoExcept, CharT, Traits, Allocator>
         , NoExcept
@@ -174,7 +174,7 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_appender_impl(string_type& str_)
-        : basic_outbuf<NoExcept, CharT>
+        : boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
             ( boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
         , _str(str_)
@@ -186,11 +186,6 @@ public:
     basic_string_appender_impl(const basic_string_appender_impl&) = delete;
     basic_string_appender_impl(basic_string_appender_impl&&) = delete;
     ~basic_string_appender_impl() = default;
-
-    // void recycle() noexcept(NoExcept) override // MSVC does't like this
-    // {
-    //     this->do_recycle();
-    // }
 
     void finish()
     {
@@ -215,7 +210,7 @@ template < bool NoExcept
          , typename Traits
          , typename Allocator >
 class basic_string_maker_impl
-    : public boost::outbuf::basic_outbuf<NoExcept, CharT>
+    : public boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
     , protected boost::outbuf::detail::string_writer_mixin
         < basic_string_maker_impl<NoExcept, CharT, Traits, Allocator>
         , NoExcept
@@ -226,7 +221,7 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_maker_impl()
-        : basic_outbuf<NoExcept, CharT>
+        : boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
             ( boost::outbuf::outbuf_garbage_buf<CharT>()
             , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
     {
@@ -261,24 +256,10 @@ private:
 
 } // namespace detail
 
-template < bool NoExcept
-         , typename CharT
-         , typename Traits = std::char_traits<CharT>
-         , typename Allocator = std::allocator<CharT> >
-class basic_string_appender;
-
-template < bool NoExcept
-         , typename CharT
-         , typename Traits = std::char_traits<CharT>
-         , typename Allocator = std::allocator<CharT> >
-class basic_string_maker;
-
-// Visual Studio forced me to create these template specializations
-
 template < typename CharT
-         , typename Traits
-         , typename Allocator >
-class basic_string_appender<true, CharT, Traits, Allocator>
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT>  >
+class basic_string_appender_noexcept
     : public boost::outbuf::detail::basic_string_appender_impl
         < true, CharT, Traits, Allocator >
 {
@@ -295,9 +276,9 @@ public:
 };
 
 template < typename CharT
-         , typename Traits
-         , typename Allocator >
-class basic_string_appender<false, CharT, Traits, Allocator>
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
+class basic_string_appender
     : public boost::outbuf::detail::basic_string_appender_impl
         < false, CharT, Traits, Allocator >
 {
@@ -307,14 +288,16 @@ public:
         < false, CharT, Traits, Allocator >
         ::basic_string_appender_impl;
 
-    void recycle() noexcept(false) override
+    void recycle() override
     {
         this->do_recycle();
     }
 };
 
-template <typename CharT, typename Traits, typename Allocator>
-class basic_string_maker<true, CharT, Traits, Allocator>
+template < typename CharT
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
+class basic_string_maker_noexcept
     : public boost::outbuf::detail::basic_string_maker_impl
         < true, CharT, Traits, Allocator >
 {
@@ -330,8 +313,10 @@ public:
     }
 };
 
-template <typename CharT, typename Traits, typename Allocator>
-class basic_string_maker<false, CharT, Traits, Allocator>
+template < typename CharT
+         , typename Traits = std::char_traits<CharT>
+         , typename Allocator = std::allocator<CharT> >
+class basic_string_maker
     : public boost::outbuf::detail::basic_string_maker_impl
         < false, CharT, Traits, Allocator >
 {
@@ -341,40 +326,40 @@ public:
         < false, CharT, Traits, Allocator >
         ::basic_string_maker_impl;
 
-    void recycle() noexcept(false) override
+    void recycle() override
     {
         this->do_recycle();
     }
 };
 
-template <bool NoExcept>
-using string_appender = basic_string_appender<NoExcept, char>;
-template <bool NoExcept>
-using u16string_appender = basic_string_appender<NoExcept, char16_t>;
-template <bool NoExcept>
-using u32string_appender = basic_string_appender<NoExcept, char32_t>;
-template <bool NoExcept>
-using wstring_appender = basic_string_appender<NoExcept, wchar_t>;
+using string_appender = basic_string_appender<char>;
+using u16string_appender = basic_string_appender<char16_t>;
+using u32string_appender = basic_string_appender<char32_t>;
+using wstring_appender = basic_string_appender<wchar_t>;
+
+using string_maker = basic_string_maker<char>;
+using u16string_maker = basic_string_maker<char16_t>;
+using u32string_maker = basic_string_maker<char32_t>;
+using wstring_maker = basic_string_maker<wchar_t>;
+
+using string_appender_noexcept = basic_string_appender_noexcept<char>;
+using u16string_appender_noexcept = basic_string_appender_noexcept<char16_t>;
+using u32string_appender_noexcept = basic_string_appender_noexcept<char32_t>;
+using wstring_appender_noexcept = basic_string_appender_noexcept<wchar_t>;
+
+using string_maker_noexcept = basic_string_maker_noexcept<char>;
+using u16string_maker_noexcept = basic_string_maker_noexcept<char16_t>;
+using u32string_maker_noexcept = basic_string_maker_noexcept<char32_t>;
+using wstring_maker_noexcept = basic_string_maker_noexcept<wchar_t>;
 
 #if defined(__cpp_char8_t)
-template <bool NoExcept>
+
 using u8string_appender = basic_string_appender<NoExcept, char8_t>;
-#endif
-
-template <bool NoExcept>
-using string_maker = basic_string_maker<NoExcept, char>;
-template <bool NoExcept>
-using u16string_maker = basic_string_maker<NoExcept, char16_t>;
-template <bool NoExcept>
-using u32string_maker = basic_string_maker<NoExcept, char32_t>;
-template <bool NoExcept>
-using wstring_maker = basic_string_maker<NoExcept, wchar_t>;
-
-#if defined(__cpp_char8_t)
-template <bool NoExcept>
 using u8string_maker = basic_string_maker<NoExcept, char8_t>;
-#endif
+using u8string_appender_noexcept = basic_string_appender_noexcept<char8_t>;
+using u8string_maker_noexcept = basic_string_maker_noexcept<char8_t>;
 
+#endif
 
 } // namespace outbuf
 } // namespace boost

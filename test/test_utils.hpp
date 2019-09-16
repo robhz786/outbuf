@@ -167,24 +167,24 @@ std::basic_string<CharT> make_tiny_string()
 }
 
 template <typename CharT>
-inline void turn_into_bad(boost::outbuf::basic_outbuf<false, CharT>& ob)
+inline void turn_into_bad(boost::outbuf::basic_outbuf<CharT>& ob)
 {
     boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
 template <typename CharT>
-inline void force_set_pos(boost::outbuf::basic_outbuf<false, CharT>& ob, CharT* pos)
+inline void force_set_pos(boost::outbuf::basic_outbuf<CharT>& ob, CharT* pos)
 {
     auto * upos = reinterpret_cast<boost::outbuf::underlying_outbuf_char_type<CharT>*>(pos);
     boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
 }
 
 template <typename CharT>
-inline void turn_into_bad(boost::outbuf::basic_outbuf<true, CharT>& ob)
+inline void turn_into_bad(boost::outbuf::basic_outbuf_noexcept<CharT>& ob)
 {
     boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
 template <typename CharT>
-inline void force_set_pos(boost::outbuf::basic_outbuf<true, CharT>& ob, CharT* pos)
+inline void force_set_pos(boost::outbuf::basic_outbuf_noexcept<CharT>& ob, CharT* pos)
 {
     auto * upos = reinterpret_cast<boost::outbuf::underlying_outbuf_char_type<CharT>*>(pos);
     boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
