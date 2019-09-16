@@ -15,8 +15,8 @@ void test_discarded_outbuf()
     auto tiny_str = test_utils::make_tiny_string<CharT>();
     auto double_str = test_utils::make_double_string<CharT>();
  
-    puts(dob, tiny_str.data(), tiny_str.size());
-    puts(dob, double_str.data(), double_str.size());
+    write(dob, tiny_str.data(), tiny_str.size());
+    write(dob, double_str.data(), double_str.size());
 
     dob.recycle();
     BOOST_TEST_GE(dob.size(), boost::outbuf::min_size_after_recycle<CharT>());

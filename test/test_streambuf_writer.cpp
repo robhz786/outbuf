@@ -18,8 +18,8 @@ void test_successfull_writing()
     
     auto expected_content = tiny_str + double_str;
 
-    puts(writer, tiny_str.data(), tiny_str.size());
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, tiny_str.data(), tiny_str.size());
+    write(writer, double_str.data(), double_str.size());
     auto status = writer.finish();
     dest.rdbuf()->pubsync();
 
@@ -40,10 +40,10 @@ void test_failing_to_recycle()
     std::basic_ostringstream<CharT> dest;
     boost::outbuf::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
 
-    puts(writer, half_str.data(), half_str.size());
+    write(writer, half_str.data(), half_str.size());
     writer.recycle(); // first recycle works
     test_utils::turn_into_bad(writer);
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, double_str.data(), double_str.size());
     auto status = writer.finish();
     dest.rdbuf()->pubsync();
 
@@ -64,9 +64,9 @@ void test_failing_to_finish()
     std::basic_ostringstream<CharT> dest;
     boost::outbuf::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
 
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, double_str.data(), double_str.size());
     writer.recycle();
-    puts(writer, half_str.data(), half_str.size());
+    write(writer, half_str.data(), half_str.size());
     test_utils::turn_into_bad(writer);
 
     auto status = writer.finish();

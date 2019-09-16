@@ -21,8 +21,8 @@ void test_narrow_successfull_writing()
     boost::outbuf::narrow_cfile_writer<CharT> writer(file);
     auto expected_content = tiny_str + double_str;
 
-    puts(writer, tiny_str.data(), tiny_str.size());
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, tiny_str.data(), tiny_str.size());
+    write(writer, double_str.data(), double_str.size());
     auto status = writer.finish();
     std::fflush(file);
     std::rewind(file);
@@ -43,8 +43,8 @@ void test_wide_successfull_writing()
     boost::outbuf::wide_cfile_writer writer(file);
     auto expected_content = tiny_str + double_str;
 
-    puts(writer, tiny_str.data(), tiny_str.size());
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, tiny_str.data(), tiny_str.size());
+    write(writer, double_str.data(), double_str.size());
     auto status = writer.finish();
     std::fflush(file);
     std::rewind(file);
@@ -67,10 +67,10 @@ void test_narrow_failing_to_recycle()
     std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::narrow_cfile_writer<CharT> writer(file);
 
-    puts(writer, half_str.data(), half_str.size());
+    write(writer, half_str.data(), half_str.size());
     writer.recycle(); // first recycle shall work
     test_utils::turn_into_bad(writer);
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, double_str.data(), double_str.size());
 
     auto status = writer.finish();
     std::fclose(file);
@@ -92,10 +92,10 @@ void test_wide_failing_to_recycle()
     std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::wide_cfile_writer writer(file);
 
-    puts(writer, half_str.data(), half_str.size());
+    write(writer, half_str.data(), half_str.size());
     writer.recycle();
     test_utils::turn_into_bad(writer);
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, double_str.data(), double_str.size());
 
     auto status = writer.finish();
     std::fclose(file);
@@ -119,9 +119,9 @@ void test_narrow_failing_to_finish()
     std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::narrow_cfile_writer<CharT> writer(file);
 
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, double_str.data(), double_str.size());
     writer.recycle();
-    puts(writer, half_str.data(), half_str.size());
+    write(writer, half_str.data(), half_str.size());
     test_utils::turn_into_bad(writer);
 
     auto status = writer.finish();
@@ -144,9 +144,9 @@ void test_wide_failing_to_finish()
     std::FILE* file = std::fopen(path.c_str(), "w");
     boost::outbuf::wide_cfile_writer writer(file);
 
-    puts(writer, double_str.data(), double_str.size());
+    write(writer, double_str.data(), double_str.size());
     writer.recycle();
-    puts(writer, half_str.data(), half_str.size());
+    write(writer, half_str.data(), half_str.size());
     test_utils::turn_into_bad(writer);
 
     auto status = writer.finish();

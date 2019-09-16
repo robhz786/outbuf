@@ -29,8 +29,8 @@ void test_successfull_append()
 
     std::basic_string<CharT> str;
     string_appender<NoExcept, CharT> ob(str);
-    puts(ob, tiny_str.c_str(), tiny_str.size());
-    puts(ob, double_str.c_str(), double_str.size());
+    write(ob, tiny_str.c_str(), tiny_str.size());
+    write(ob, double_str.c_str(), double_str.size());
     ob.finish();
     BOOST_TEST(str == expected_content);
 }
@@ -43,8 +43,8 @@ void test_successfull_make()
     auto expected_content = tiny_str + double_str;
 
     string_maker<NoExcept, CharT> ob;
-    puts(ob, tiny_str.c_str(), tiny_str.size());
-    puts(ob, double_str.c_str(), double_str.size());
+    write(ob, tiny_str.c_str(), tiny_str.size());
+    write(ob, double_str.c_str(), double_str.size());
     BOOST_TEST(ob.finish() == expected_content);
 }
 
@@ -55,8 +55,8 @@ void test_corrupted_pos_too_small_on_recycle()
     const auto bufsize = ob.size();
     auto double_str = test_utils::make_string<CharT>(bufsize * 2);
     auto half_str = test_utils::make_string<CharT>(bufsize / 2);
-    puts(ob, double_str.c_str(), double_str.size());
-    puts(ob, half_str.c_str(), half_str.size());
+    write(ob, double_str.c_str(), double_str.size());
+    write(ob, half_str.c_str(), half_str.size());
     test_utils::force_set_pos(ob, ob.end() - bufsize - 1);
     ob.recycle();
     BOOST_TEST(ob.finish() == double_str);
@@ -80,8 +80,8 @@ void test_corrupted_pos_too_small_on_finish()
     const auto bufsize = ob.size();
     auto double_str = test_utils::make_double_string<CharT>();
     auto half_str = test_utils::make_half_string<CharT>();
-    puts(ob, double_str.c_str(), double_str.size());
-    puts(ob, half_str.c_str(), half_str.size());
+    write(ob, double_str.c_str(), double_str.size());
+    write(ob, half_str.c_str(), half_str.size());
     test_utils::force_set_pos(ob, ob.end() - bufsize - 1);
     BOOST_TEST(ob.finish() == double_str);
 }
@@ -182,15 +182,15 @@ void test_recycle_catches_exception()
     auto double_str = test_utils::make_double_string<CharT>();
     auto half_str = test_utils::make_half_string<CharT>();
 
-    puts(ob, double_str.c_str(), double_str.size());
+    write(ob, double_str.c_str(), double_str.size());
     ob.recycle();
     ob.throw_on_next_append();
 
-    puts(ob, half_str.c_str(), half_str.size());
+    write(ob, half_str.c_str(), half_str.size());
     ob.recycle();
     BOOST_TEST(!ob.good());
 
-    puts(ob, half_str.c_str(), half_str.size());
+    write(ob, half_str.c_str(), half_str.size());
     ob.recycle();
     BOOST_TEST(!ob.good());
 
@@ -208,17 +208,17 @@ void test_recycle_that_throws()
     auto double_str = test_utils::make_double_string<CharT>();
     auto half_str = test_utils::make_half_string<CharT>();
     auto expected_content = double_str;
-    puts(ob, double_str.c_str(), double_str.size());
+    write(ob, double_str.c_str(), double_str.size());
     ob.recycle();
     ob.throw_on_next_append();
 
-    puts(ob, half_str.c_str(), half_str.size());
+    write(ob, half_str.c_str(), half_str.size());
     BOOST_TEST_THROWS(ob.recycle(), std::bad_alloc);
     BOOST_TEST(!ob.good());
 
     ob.throw_on_next_append(false);
 
-    puts(ob, half_str.c_str(), half_str.size());
+    write(ob, half_str.c_str(), half_str.size());
     ob.recycle(); // must be no-op
     BOOST_TEST(!ob.good());
 
