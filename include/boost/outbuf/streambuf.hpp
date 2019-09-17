@@ -13,16 +13,14 @@
 #include <boost/outbuf.hpp>
 
 namespace boost {
-namespace outbuf {
 
 template <typename CharT, typename Traits = std::char_traits<CharT> >
-class basic_streambuf_writer final
-    : public boost::outbuf::basic_outbuf<CharT>
+class basic_streambuf_writer final: public boost::basic_outbuf<CharT>
 {
 public:
 
     explicit basic_streambuf_writer(std::basic_streambuf<CharT, Traits>& dest_)
-        : boost::outbuf::basic_outbuf<CharT>(_buf, _buf_size)
+        : boost::basic_outbuf<CharT>(_buf, _buf_size)
         , _dest(dest_)
     {
     }
@@ -73,18 +71,18 @@ private:
     std::basic_streambuf<CharT, Traits>& _dest;
     std::streamsize _count = 0;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::min_size_after_recycle<CharT>();
+        = boost::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 
 // template <typename CharT, typename Traits>
 // class basic_streambuf_writer_noexcept final
-//     : public boost::outbuf::basic_outbuf<true, CharT>
+//     : public boost::basic_outbuf<true, CharT>
 // {
 // public:
 
 //     explicit basic_streambuf_writer_noexcept(std::basic_streambuf<CharT, Traits>& dest_)
-//         : boost::outbuf::basic_outbuf<true, CharT>(_buf, _buf_size)
+//         : boost::basic_outbuf<true, CharT>(_buf, _buf_size)
 //         , _dest(dest_)
 //     {
 //     }
@@ -151,7 +149,7 @@ private:
 //     std::basic_streambuf<CharT, Traits>& _dest;
 //     std::streamsize _count = 0;
 //     static constexpr std::size_t _buf_size
-//         = boost::outbuf::underlying_outbuf<CharT>::min_size_after_recycle;
+//         = boost::underlying_outbuf<CharT>::min_size_after_recycle;
 //     CharT _buf[_buf_size];
 // };
 
@@ -162,7 +160,6 @@ using wstreambuf_writer
     = basic_streambuf_writer<wchar_t, std::char_traits<wchar_t> >;
 
 
-} // namespace outbuf
 } // namespace boost
 
 #endif  // BOOST_OUTBUF_STREAMBUF_HPP

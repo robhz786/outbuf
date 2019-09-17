@@ -13,7 +13,6 @@
 #include <boost/outbuf.hpp>
 
 namespace boost {
-namespace outbuf {
 namespace detail {
 
 template <typename T, bool NoExcept, typename CharT>
@@ -68,7 +67,7 @@ public:
 private:
 
     static constexpr std::size_t _buf_size
-        = boost::outbuf::min_size_after_recycle<CharT>();
+        = boost::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 
@@ -144,7 +143,7 @@ private:
 
     std::exception_ptr _eptr = nullptr;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::min_size_after_recycle<CharT>();
+        = boost::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 
@@ -163,8 +162,8 @@ template < bool NoExcept
          , typename Traits
          , typename Allocator >
 class basic_string_appender_impl
-    : public boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
-    , protected boost::outbuf::detail::string_writer_mixin
+    : public boost::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
+    , protected boost::detail::string_writer_mixin
         < basic_string_appender_impl<NoExcept, CharT, Traits, Allocator>
         , NoExcept
         , CharT >
@@ -174,9 +173,9 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_appender_impl(string_type& str_)
-        : boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
-            ( boost::outbuf::outbuf_garbage_buf<CharT>()
-            , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
+        : boost::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
+            ( boost::outbuf_garbage_buf<CharT>()
+            , boost::outbuf_garbage_buf_end<CharT>() )
         , _str(str_)
     {
         this->set_pos(this->buf_begin());
@@ -210,8 +209,8 @@ template < bool NoExcept
          , typename Traits
          , typename Allocator >
 class basic_string_maker_impl
-    : public boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
-    , protected boost::outbuf::detail::string_writer_mixin
+    : public boost::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
+    , protected boost::detail::string_writer_mixin
         < basic_string_maker_impl<NoExcept, CharT, Traits, Allocator>
         , NoExcept
         , CharT >
@@ -221,9 +220,9 @@ public:
     using string_type = std::basic_string<CharT, Traits>;
 
     basic_string_maker_impl()
-        : boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
-            ( boost::outbuf::outbuf_garbage_buf<CharT>()
-            , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
+        : boost::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
+            ( boost::outbuf_garbage_buf<CharT>()
+            , boost::outbuf_garbage_buf_end<CharT>() )
     {
         this->set_pos(this->buf_begin());
         this->set_end(this->buf_end());
@@ -260,12 +259,12 @@ template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT>  >
 class basic_string_appender_noexcept
-    : public boost::outbuf::detail::basic_string_appender_impl
+    : public boost::detail::basic_string_appender_impl
         < true, CharT, Traits, Allocator >
 {
 public:
 
-    using boost::outbuf::detail::basic_string_appender_impl
+    using boost::detail::basic_string_appender_impl
         < true, CharT, Traits, Allocator >
         ::basic_string_appender_impl;
 
@@ -279,12 +278,12 @@ template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT> >
 class basic_string_appender
-    : public boost::outbuf::detail::basic_string_appender_impl
+    : public boost::detail::basic_string_appender_impl
         < false, CharT, Traits, Allocator >
 {
 public:
 
-    using boost::outbuf::detail::basic_string_appender_impl
+    using boost::detail::basic_string_appender_impl
         < false, CharT, Traits, Allocator >
         ::basic_string_appender_impl;
 
@@ -298,12 +297,12 @@ template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT> >
 class basic_string_maker_noexcept
-    : public boost::outbuf::detail::basic_string_maker_impl
+    : public boost::detail::basic_string_maker_impl
         < true, CharT, Traits, Allocator >
 {
 public:
 
-    using boost::outbuf::detail::basic_string_maker_impl
+    using boost::detail::basic_string_maker_impl
         < true, CharT, Traits, Allocator >
         ::basic_string_maker_impl;
 
@@ -317,12 +316,12 @@ template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT> >
 class basic_string_maker
-    : public boost::outbuf::detail::basic_string_maker_impl
+    : public boost::detail::basic_string_maker_impl
         < false, CharT, Traits, Allocator >
 {
 public:
 
-    using boost::outbuf::detail::basic_string_maker_impl
+    using boost::detail::basic_string_maker_impl
         < false, CharT, Traits, Allocator >
         ::basic_string_maker_impl;
 
@@ -361,7 +360,6 @@ using u8string_maker_noexcept = basic_string_maker_noexcept<char8_t>;
 
 #endif
 
-} // namespace outbuf
 } // namespace boost
 
 #endif  // BOOST_OUTBUF_STRING_HPP

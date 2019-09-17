@@ -19,9 +19,9 @@ int main()
 
         char buff[sizeof(expected)];
 
-        boost::outbuf::basic_cstr_writer<char> sw(buff);
-        boost::outbuf::write(sw, s1a);
-        boost::outbuf::write(sw, s1b);
+        boost::basic_cstr_writer<char> sw(buff);
+        boost::write(sw, s1a);
+        boost::write(sw, s1b);
         auto r1 = sw.finish();
 
         BOOST_TEST(! r1.truncated);
@@ -30,7 +30,7 @@ int main()
         BOOST_TEST_CSTR_EQ(buff, "Hello World");
         BOOST_TEST(sw.good());
 
-        boost::outbuf::write(sw, s2);
+        boost::write(sw, s2);
         auto r2 = sw.finish();
         BOOST_TEST(! r2.truncated);
         BOOST_TEST_EQ(*r2.ptr, '\0');
@@ -38,9 +38,9 @@ int main()
         BOOST_TEST_CSTR_EQ(r1.ptr + 1, s2);
         BOOST_TEST(sw.good());
 
-        boost::outbuf::write(sw, s3a);
+        boost::write(sw, s3a);
         BOOST_TEST(sw.good());
-        boost::outbuf::write(sw, s3b);
+        boost::write(sw, s3b);
         BOOST_TEST(!sw.good());
         auto r3 = sw.finish();
         BOOST_TEST(!sw.good());
@@ -53,7 +53,7 @@ int main()
 
     {
         char buff[8];
-        boost::outbuf::basic_cstr_writer<char> sw(buff);
+        boost::basic_cstr_writer<char> sw(buff);
         write(sw, "Hello");
         write(sw, " World");
         write(sw, "blah blah blah");

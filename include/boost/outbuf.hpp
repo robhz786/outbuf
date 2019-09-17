@@ -15,8 +15,6 @@
 #include <boost/assert.hpp>
 
 namespace boost {
-namespace outbuf {
-
 namespace detail {
 
 class outbuf_test_tool;
@@ -45,7 +43,7 @@ class underlying_outbuf
 {
 public:
 
-    using char_type = boost::outbuf::underlying_outbuf_char_type<CharSize>;
+    using char_type = boost::underlying_outbuf_char_type<CharSize>;
 
     underlying_outbuf(const underlying_outbuf&) = delete;
     underlying_outbuf(underlying_outbuf&&) = delete;
@@ -90,7 +88,7 @@ public:
     }
     void ensure(std::size_t s)
     {
-        BOOST_ASSERT(s <= boost::outbuf::min_size_after_recycle<char_type>());
+        BOOST_ASSERT(s <= boost::min_size_after_recycle<char_type>());
         if (pos() + s > end())
         {
             recycle();
@@ -122,16 +120,16 @@ private:
     char_type* _pos;
     char_type* _end;
     bool _good = true;
-    friend class boost::outbuf::detail::outbuf_test_tool;
+    friend class boost::detail::outbuf_test_tool;
 };
 
 template <typename CharT>
 class basic_outbuf;
 
 template <typename CharT>
-class basic_outbuf: private boost::outbuf::underlying_outbuf<sizeof(CharT)>
+class basic_outbuf: private boost::underlying_outbuf<sizeof(CharT)>
 {
-    using _underlying_impl = boost::outbuf::underlying_outbuf<sizeof(CharT)>;
+    using _underlying_impl = boost::underlying_outbuf<sizeof(CharT)>;
     using _underlying_char_t = typename _underlying_impl::char_type;
 
 public:
@@ -216,13 +214,13 @@ struct basic_outbuf_noexcept_switch_impl;
 template <typename CharT>
 struct basic_outbuf_noexcept_switch_impl<false, CharT>
 {
-    using type = boost::outbuf::basic_outbuf<CharT>;
+    using type = boost::basic_outbuf<CharT>;
 };
 
 template <typename CharT>
 struct basic_outbuf_noexcept_switch_impl<true, CharT>
 {
-    using type = boost::outbuf::basic_outbuf_noexcept<CharT>;
+    using type = boost::basic_outbuf_noexcept<CharT>;
 };
 
 template <bool NoExcept, typename CharT>
@@ -293,99 +291,99 @@ void outbuf_put(Outbuf& ob, CharT c)
 
 template <std::size_t CharSize>
 inline void write
-    ( boost::outbuf::underlying_outbuf<CharSize>& ob
-    , const boost::outbuf::underlying_outbuf_char_type<CharSize>* str
+    ( boost::underlying_outbuf<CharSize>& ob
+    , const boost::underlying_outbuf_char_type<CharSize>* str
     , std::size_t len )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, len);
+    boost::detail::outbuf_write(ob, str, len);
 }
 
 template <typename CharT>
-inline void write( boost::outbuf::basic_outbuf<CharT>& ob
+inline void write( boost::basic_outbuf<CharT>& ob
                  , const CharT* str
                  , std::size_t len )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, len);
+    boost::detail::outbuf_write(ob, str, len);
 }
 
 template <typename CharT>
-inline void write( boost::outbuf::basic_outbuf_noexcept<CharT>& ob
+inline void write( boost::basic_outbuf_noexcept<CharT>& ob
                  , const CharT* str
                  , std::size_t len )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, len);
+    boost::detail::outbuf_write(ob, str, len);
 }
 
 template <std::size_t CharSize>
 inline void write
-    ( boost::outbuf::underlying_outbuf<CharSize>& ob
-    , const boost::outbuf::underlying_outbuf_char_type<CharSize>* str
-    , const boost::outbuf::underlying_outbuf_char_type<CharSize>* str_end )
+    ( boost::underlying_outbuf<CharSize>& ob
+    , const boost::underlying_outbuf_char_type<CharSize>* str
+    , const boost::underlying_outbuf_char_type<CharSize>* str_end )
 {
     BOOST_ASSERT(str_end >= str);
-    boost::outbuf::detail::outbuf_write(ob, str, str_end - str);
+    boost::detail::outbuf_write(ob, str, str_end - str);
 }
 
 template <typename CharT>
-inline void write( boost::outbuf::basic_outbuf<CharT>& ob
+inline void write( boost::basic_outbuf<CharT>& ob
                  , const CharT* str
                  , const CharT* str_end )
 {
     BOOST_ASSERT(str_end >= str);
-    boost::outbuf::detail::outbuf_write(ob, str, str_end - str);
+    boost::detail::outbuf_write(ob, str, str_end - str);
 }
 
 template <typename CharT>
-inline void write( boost::outbuf::basic_outbuf_noexcept<CharT>& ob
+inline void write( boost::basic_outbuf_noexcept<CharT>& ob
                  , const CharT* str
                  , const CharT* str_end )
 {
     BOOST_ASSERT(str_end >= str);
-    boost::outbuf::detail::outbuf_write(ob, str, str_end - str);
+    boost::detail::outbuf_write(ob, str, str_end - str);
 }
 
-inline void write( boost::outbuf::basic_outbuf<char>& ob
+inline void write( boost::basic_outbuf<char>& ob
                  , const char* str )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, std::strlen(str));
+    boost::detail::outbuf_write(ob, str, std::strlen(str));
 }
 
-inline void write( boost::outbuf::basic_outbuf_noexcept<char>& ob
+inline void write( boost::basic_outbuf_noexcept<char>& ob
                  , const char* str )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, std::strlen(str));
+    boost::detail::outbuf_write(ob, str, std::strlen(str));
 }
 
-inline void write( boost::outbuf::basic_outbuf<wchar_t>& ob
+inline void write( boost::basic_outbuf<wchar_t>& ob
                  , const wchar_t* str )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, std::wcslen(str));
+    boost::detail::outbuf_write(ob, str, std::wcslen(str));
 }
 
-inline void write( boost::outbuf::basic_outbuf_noexcept<wchar_t>& ob
+inline void write( boost::basic_outbuf_noexcept<wchar_t>& ob
                  , const wchar_t* str )
 {
-    boost::outbuf::detail::outbuf_write(ob, str, std::wcslen(str));
+    boost::detail::outbuf_write(ob, str, std::wcslen(str));
 }
 
 template <std::size_t CharSize>
 inline void put
-    ( boost::outbuf::underlying_outbuf<CharSize>& ob
-    , boost::outbuf::underlying_outbuf_char_type<CharSize> c )
+    ( boost::underlying_outbuf<CharSize>& ob
+    , boost::underlying_outbuf_char_type<CharSize> c )
 {
-    boost::outbuf::detail::outbuf_put(ob, c);
+    boost::detail::outbuf_put(ob, c);
 }
 
 template <typename CharT>
-inline void put( boost::outbuf::basic_outbuf<CharT>& ob, CharT c )
+inline void put( boost::basic_outbuf<CharT>& ob, CharT c )
 {
-    boost::outbuf::detail::outbuf_put(ob, c);
+    boost::detail::outbuf_put(ob, c);
 }
 
 template <typename CharT>
-inline void put( boost::outbuf::basic_outbuf_noexcept<CharT>& ob, CharT c )
+inline void put( boost::basic_outbuf_noexcept<CharT>& ob, CharT c )
 {
-    boost::outbuf::detail::outbuf_write(ob, c);
+    boost::detail::outbuf_write(ob, c);
 }
 // type aliases
 
@@ -418,7 +416,7 @@ public:
     template<std::size_t CharSize>
     static void force_set_pos
         ( underlying_outbuf<CharSize>& ob
-        , boost::outbuf::underlying_outbuf_char_type<CharSize>* pos)
+        , boost::underlying_outbuf_char_type<CharSize>* pos)
     {
         ob.set_pos(pos);
     }
@@ -428,11 +426,11 @@ public:
 inline char32_t* _outbuf_garbage_buf()
 {
     constexpr std::size_t s1
-        = (boost::outbuf::min_size_after_recycle<char>() + 1) / 4;
+        = (boost::min_size_after_recycle<char>() + 1) / 4;
     constexpr std::size_t s2
-        = (boost::outbuf::min_size_after_recycle<char16_t>() + 1) / 2;
+        = (boost::min_size_after_recycle<char16_t>() + 1) / 2;
     constexpr std::size_t s4
-        = boost::outbuf::min_size_after_recycle<char32_t>();
+        = boost::min_size_after_recycle<char32_t>();
     constexpr std::size_t max_s1_s2 = s1 > s2 ? s1 : s2;
     constexpr std::size_t max_s1_s2_s4 = max_s1_s2 > s4 ? max_s1_s2 : s4;
 
@@ -445,18 +443,18 @@ inline char32_t* _outbuf_garbage_buf()
 template <typename CharT>
 inline CharT* outbuf_garbage_buf()
 {
-    return reinterpret_cast<CharT*>(boost::outbuf::detail::_outbuf_garbage_buf());
+    return reinterpret_cast<CharT*>(boost::detail::_outbuf_garbage_buf());
 }
 
 template <typename CharT>
 inline CharT* outbuf_garbage_buf_end()
 {
-    return boost::outbuf::outbuf_garbage_buf<CharT>()
-        + boost::outbuf::min_size_after_recycle<CharT>();
+    return boost::outbuf_garbage_buf<CharT>()
+        + boost::min_size_after_recycle<CharT>();
 }
 
 template <typename CharT>
-class basic_cstr_writer final: public boost::outbuf::basic_outbuf_noexcept<CharT>
+class basic_cstr_writer final: public boost::basic_outbuf_noexcept<CharT>
 {
 public:
 
@@ -523,14 +521,14 @@ using wcstr_writer = basic_cstr_writer<wchar_t>;
 
 template <typename CharT>
 class discarded_outbuf final
-    : public boost::outbuf::basic_outbuf_noexcept<CharT>
+    : public boost::basic_outbuf_noexcept<CharT>
 {
 public:
 
     discarded_outbuf()
         : basic_outbuf_noexcept<CharT>
-            { boost::outbuf::outbuf_garbage_buf<CharT>()
-            , boost::outbuf::outbuf_garbage_buf_end<CharT>() }
+            { boost::outbuf_garbage_buf<CharT>()
+            , boost::outbuf_garbage_buf_end<CharT>() }
     {
         this->set_good(false);
     }
@@ -539,11 +537,10 @@ public:
 
     void recycle() noexcept override
     {
-        this->set_pos(boost::outbuf::outbuf_garbage_buf<CharT>());
+        this->set_pos(boost::outbuf_garbage_buf<CharT>());
     }
 };
 
-} // namespace outbuf
 } // namespace boost
 
 #endif  // BOOST_OUTBUF_HPP

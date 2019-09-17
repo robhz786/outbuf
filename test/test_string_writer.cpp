@@ -9,15 +9,15 @@
 template <bool NoExcept, typename CharT >
 using string_maker = typename std::conditional
     < NoExcept
-    , boost::outbuf::basic_string_maker_noexcept<CharT>
-    , boost::outbuf::basic_string_maker<CharT> >
+    , boost::basic_string_maker_noexcept<CharT>
+    , boost::basic_string_maker<CharT> >
     :: type;
 
 template <bool NoExcept, typename CharT >
 using string_appender = typename std::conditional
     < NoExcept
-    , boost::outbuf::basic_string_appender_noexcept<CharT>
-    , boost::outbuf::basic_string_appender<CharT> >
+    , boost::basic_string_appender_noexcept<CharT>
+    , boost::basic_string_appender<CharT> >
     :: type;
 
 template <bool NoExcept, typename CharT>
@@ -98,8 +98,8 @@ void test_corrupted_pos_too_big_on_finish()
 
 template <bool NoExcept, typename CharT>
 class string_maker_that_throws_impl
-    : public boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
-    , protected boost::outbuf::detail::string_writer_mixin
+    : public boost::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
+    , protected boost::detail::string_writer_mixin
         < string_maker_that_throws_impl<NoExcept, CharT>, NoExcept, CharT >
 {
 public:
@@ -107,9 +107,9 @@ public:
     using string_type = std::basic_string<CharT>;
 
     string_maker_that_throws_impl()
-        : boost::outbuf::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
-            ( boost::outbuf::outbuf_garbage_buf<CharT>()
-            , boost::outbuf::outbuf_garbage_buf_end<CharT>() )
+        : boost::detail::basic_outbuf_noexcept_switch<NoExcept, CharT>
+            ( boost::outbuf_garbage_buf<CharT>()
+            , boost::outbuf_garbage_buf_end<CharT>() )
     {
         this->set_pos(this->buf_begin());
         this->set_end(this->buf_end());
@@ -133,7 +133,7 @@ public:
 private:
 
     template <typename, bool, typename>
-    friend class boost::outbuf::detail::string_writer_mixin;
+    friend class boost::detail::string_writer_mixin;
 
     void _append(const CharT* begin, const CharT* end)
     {

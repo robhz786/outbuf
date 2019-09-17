@@ -14,7 +14,7 @@ void test_successfull_writing()
     auto double_str = test_utils::make_double_string<CharT>();
 
     std::basic_ostringstream<CharT> dest;
-    boost::outbuf::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
+    boost::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
     
     auto expected_content = tiny_str + double_str;
 
@@ -38,7 +38,7 @@ void test_failing_to_recycle()
     auto expected_content = half_str;
 
     std::basic_ostringstream<CharT> dest;
-    boost::outbuf::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
+    boost::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
 
     write(writer, half_str.data(), half_str.size());
     writer.recycle(); // first recycle works
@@ -62,7 +62,7 @@ void test_failing_to_finish()
     auto expected_content = double_str;
 
     std::basic_ostringstream<CharT> dest;
-    boost::outbuf::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
+    boost::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
 
     write(writer, double_str.data(), double_str.size());
     writer.recycle();

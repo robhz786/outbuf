@@ -18,7 +18,7 @@ void test_narrow_successfull_writing()
     auto double_str = test_utils::make_double_string<CharT>();
 
     std::FILE* file = std::tmpfile();
-    boost::outbuf::narrow_cfile_writer<CharT> writer(file);
+    boost::narrow_cfile_writer<CharT> writer(file);
     auto expected_content = tiny_str + double_str;
 
     write(writer, tiny_str.data(), tiny_str.size());
@@ -40,7 +40,7 @@ void test_wide_successfull_writing()
     auto double_str = test_utils::make_double_string<wchar_t>();
 
     std::FILE* file = std::tmpfile();
-    boost::outbuf::wide_cfile_writer writer(file);
+    boost::wide_cfile_writer writer(file);
     auto expected_content = tiny_str + double_str;
 
     write(writer, tiny_str.data(), tiny_str.size());
@@ -65,7 +65,7 @@ void test_narrow_failing_to_recycle()
 
     auto path = test_utils::unique_tmp_file_name();
     std::FILE* file = std::fopen(path.c_str(), "w");
-    boost::outbuf::narrow_cfile_writer<CharT> writer(file);
+    boost::narrow_cfile_writer<CharT> writer(file);
 
     write(writer, half_str.data(), half_str.size());
     writer.recycle(); // first recycle shall work
@@ -90,7 +90,7 @@ void test_wide_failing_to_recycle()
 
     auto path = test_utils::unique_tmp_file_name();
     std::FILE* file = std::fopen(path.c_str(), "w");
-    boost::outbuf::wide_cfile_writer writer(file);
+    boost::wide_cfile_writer writer(file);
 
     write(writer, half_str.data(), half_str.size());
     writer.recycle();
@@ -117,7 +117,7 @@ void test_narrow_failing_to_finish()
 
     auto path = test_utils::unique_tmp_file_name();
     std::FILE* file = std::fopen(path.c_str(), "w");
-    boost::outbuf::narrow_cfile_writer<CharT> writer(file);
+    boost::narrow_cfile_writer<CharT> writer(file);
 
     write(writer, double_str.data(), double_str.size());
     writer.recycle();
@@ -142,7 +142,7 @@ void test_wide_failing_to_finish()
 
     auto path = test_utils::unique_tmp_file_name();
     std::FILE* file = std::fopen(path.c_str(), "w");
-    boost::outbuf::wide_cfile_writer writer(file);
+    boost::wide_cfile_writer writer(file);
 
     write(writer, double_str.data(), double_str.size());
     writer.recycle();

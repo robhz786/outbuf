@@ -9,7 +9,7 @@
 template <typename CharT>
 void test_discarded_outbuf()
 {
-    boost::outbuf::discarded_outbuf<CharT> dob;
+    boost::discarded_outbuf<CharT> dob;
     BOOST_TEST(!dob.good());
 
     auto tiny_str = test_utils::make_tiny_string<CharT>();
@@ -19,9 +19,9 @@ void test_discarded_outbuf()
     write(dob, double_str.data(), double_str.size());
 
     dob.recycle();
-    BOOST_TEST_GE(dob.size(), boost::outbuf::min_size_after_recycle<CharT>());
-    BOOST_TEST(dob.pos() == boost::outbuf::outbuf_garbage_buf<CharT>());
-    BOOST_TEST(dob.end() == boost::outbuf::outbuf_garbage_buf_end<CharT>());
+    BOOST_TEST_GE(dob.size(), boost::min_size_after_recycle<CharT>());
+    BOOST_TEST(dob.pos() == boost::outbuf_garbage_buf<CharT>());
+    BOOST_TEST(dob.end() == boost::outbuf_garbage_buf_end<CharT>());
 }
 
 int main()

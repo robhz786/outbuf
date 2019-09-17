@@ -9,15 +9,14 @@
 #include <boost/outbuf.hpp>
 
 namespace boost {
-namespace outbuf {
 
 template <typename CharT>
-class narrow_cfile_writer final: public boost::outbuf::basic_outbuf_noexcept<CharT>
+class narrow_cfile_writer final: public boost::basic_outbuf_noexcept<CharT>
 {
 public:
 
     explicit narrow_cfile_writer(std::FILE* dest_)
-        : boost::outbuf::basic_outbuf_noexcept<CharT>(_buf, _buf_size)
+        : boost::basic_outbuf_noexcept<CharT>(_buf, _buf_size)
         , _dest(dest_)
     {
         BOOST_ASSERT(dest_ != nullptr);
@@ -69,16 +68,16 @@ private:
     std::FILE* _dest;
     std::size_t _count = 0;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::min_size_after_recycle<CharT>();
+        = boost::min_size_after_recycle<CharT>();
     CharT _buf[_buf_size];
 };
 
-class wide_cfile_writer final: public boost::outbuf::basic_outbuf_noexcept<wchar_t>
+class wide_cfile_writer final: public boost::basic_outbuf_noexcept<wchar_t>
 {
 public:
 
     explicit wide_cfile_writer(std::FILE* dest_)
-        : boost::outbuf::basic_outbuf_noexcept<wchar_t>(_buf, _buf_size)
+        : boost::basic_outbuf_noexcept<wchar_t>(_buf, _buf_size)
         , _dest(dest_)
     {
         BOOST_ASSERT(dest_ != nullptr);
@@ -128,11 +127,10 @@ public:
     std::FILE* _dest;
     std::size_t _count = 0;
     static constexpr std::size_t _buf_size
-        = boost::outbuf::min_size_after_recycle<wchar_t>();
+        = boost::min_size_after_recycle<wchar_t>();
     wchar_t _buf[_buf_size];  
 };
 
-} // namespace boost
 } // namespace outbuf
 
 #endif  // BOOST_OUTBUF_FILE_HPP

@@ -35,8 +35,6 @@ std::string unique_tmp_file_name()
 #endif  // defined(_WIN32)
 }
 
-
-
 std::wstring read_wfile(std::FILE* file)
 {
     std::wstring result;
@@ -142,21 +140,21 @@ std::basic_string<CharT> make_string(std::size_t size)
 template <typename CharT>
 inline std::basic_string<CharT> make_half_string()
 {
-    constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
+    constexpr auto bufsize = boost::min_size_after_recycle<CharT>();
     return make_string<CharT>(bufsize / 2);
 }
 
 template <typename CharT>
 inline std::basic_string<CharT> make_full_string()
 {
-    constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
+    constexpr auto bufsize = boost::min_size_after_recycle<CharT>();
     return make_string<CharT>(bufsize);
 }
 
 template <typename CharT>
 inline std::basic_string<CharT> make_double_string()
 {
-    constexpr auto bufsize = boost::outbuf::min_size_after_recycle<CharT>();
+    constexpr auto bufsize = boost::min_size_after_recycle<CharT>();
     return make_string<CharT>(2 * bufsize);
 }
 
@@ -167,33 +165,33 @@ std::basic_string<CharT> make_tiny_string()
 }
 
 template <typename CharT>
-inline void turn_into_bad(boost::outbuf::basic_outbuf<CharT>& ob)
+inline void turn_into_bad(boost::basic_outbuf<CharT>& ob)
 {
-    boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
+    boost::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
 
 template <typename CharT>
-inline void force_set_pos(boost::outbuf::basic_outbuf<CharT>& ob, CharT* pos)
+inline void force_set_pos(boost::basic_outbuf<CharT>& ob, CharT* pos)
 {
-    using underlying_ob = boost::outbuf::underlying_outbuf<sizeof(CharT)>;
+    using underlying_ob = boost::underlying_outbuf<sizeof(CharT)>;
     using underlying_char_type = typename underlying_ob::char_type;
     auto * upos = reinterpret_cast<underlying_char_type*>(pos);
-    boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
+    boost::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
 }
 
 template <typename CharT>
-inline void turn_into_bad(boost::outbuf::basic_outbuf_noexcept<CharT>& ob)
+inline void turn_into_bad(boost::basic_outbuf_noexcept<CharT>& ob)
 {
-    boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
+    boost::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
 
 template <typename CharT>
-inline void force_set_pos(boost::outbuf::basic_outbuf_noexcept<CharT>& ob, CharT* pos)
+inline void force_set_pos(boost::basic_outbuf_noexcept<CharT>& ob, CharT* pos)
 {
-    using underlying_ob = boost::outbuf::underlying_outbuf<sizeof(CharT)>;
+    using underlying_ob = boost::underlying_outbuf<sizeof(CharT)>;
     using underlying_char_type = typename underlying_ob::char_type;
     auto * upos = reinterpret_cast<underlying_char_type*>(pos);
-    boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
+    boost::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
 }
 
 } // namespace test_utils
