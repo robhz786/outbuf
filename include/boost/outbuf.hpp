@@ -5,14 +5,11 @@
 //  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/assert.hpp>
+
 #include <cstring>
 #include <cwchar>
-
-#if defined(__cpp_exceptions)
-#include <exception>
-#endif
-
-#include <boost/assert.hpp>
+#include <cstddef>
 
 namespace boost {
 namespace detail {
@@ -387,19 +384,23 @@ inline void put( boost::basic_outbuf_noexcept<CharT>& ob, CharT c )
 }
 // type aliases
 
+#if defined(__cpp_lib_byte)
+using bin_outbuf           = basic_outbuf<char8_t>;
+using bin_outbuf_noexcept  = basic_outbuf_noexcept<char8_t>;
+#endif
+
 #if defined(__cpp_char8_t)
-using u8outbuf  = basic_outbuf<char8_t>;
+using u8outbuf           = basic_outbuf<char8_t>;
 using u8outbuf_noexcept  = basic_outbuf_noexcept<char8_t>;
 #endif
 
-using outbuf    = basic_outbuf<char>;
-using u26outbuf = basic_outbuf<char16_t>;
-using u32outbuf = basic_outbuf<char32_t>;
-using woutbuf   = basic_outbuf<wchar_t>;
-
+using outbuf             = basic_outbuf<char>;
 using outbuf_noexcept    = basic_outbuf_noexcept<char>;
-using u26outbuf_noexcept = basic_outbuf_noexcept<char16_t>;
+using u16outbuf          = basic_outbuf<char16_t>;
+using u16outbuf_noexcept = basic_outbuf_noexcept<char16_t>;
+using u32outbuf          = basic_outbuf<char32_t>;
 using u32outbuf_noexcept = basic_outbuf_noexcept<char32_t>;
+using woutbuf            = basic_outbuf<wchar_t>;
 using woutbuf_noexcept   = basic_outbuf_noexcept<wchar_t>;
 
 namespace detail {
@@ -510,6 +511,7 @@ private:
 
     CharT* _it;
 };
+
 
 #if defined(__cpp_char8_t)
 using u8cstr_writer = basic_cstr_writer<char8_t>;
