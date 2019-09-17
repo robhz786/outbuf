@@ -30,9 +30,9 @@ template <> struct underlying_outbuf_char_type_impl<4>{using type = char32_t;};
 
 } // namespace detail
 
-template <typename CharT>
+template <std::size_t CharSize>
 using underlying_outbuf_char_type
-= typename detail::underlying_outbuf_char_type_impl<sizeof(CharT)>::type;
+= typename detail::underlying_outbuf_char_type_impl<CharSize>::type;
 
 template <typename CharT>
 constexpr std::size_t min_size_after_recycle()
@@ -40,15 +40,12 @@ constexpr std::size_t min_size_after_recycle()
     return 64;
 }
 
-template <typename CharT>
+template <std::size_t CharSize>
 class underlying_outbuf
 {
 public:
 
-    static_assert( std::is_same<CharT, underlying_outbuf_char_type<CharT>>::value
-                 , "Forbidden character type in underlying_outbuf" );
-
-    using char_type = CharT;
+    using char_type = boost::outbuf::underlying_outbuf_char_type<CharSize>;
 
     underlying_outbuf(const underlying_outbuf&) = delete;
     underlying_outbuf(underlying_outbuf&&) = delete;
@@ -57,11 +54,11 @@ public:
 
     virtual ~underlying_outbuf() = default;
 
-    CharT* pos() const noexcept
+    char_type* pos() const noexcept
     {
         return _pos;
     }
-    CharT* end() const noexcept
+    char_type* end() const noexcept
     {
         return _end;
     }
@@ -75,7 +72,7 @@ public:
     {
         return _good;
     }
-    void advance_to(CharT* p)
+    void advance_to(char_type* p)
     {
         BOOST_ASSERT(_pos <= p);
         BOOST_ASSERT(p <= _end);
@@ -93,7 +90,7 @@ public:
     }
     void ensure(std::size_t s)
     {
-        BOOST_ASSERT(s <= boost::outbuf::min_size_after_recycle<CharT>());
+        BOOST_ASSERT(s <= boost::outbuf::min_size_after_recycle<char_type>());
         if (pos() + s > end())
         {
             recycle();
@@ -105,43 +102,37 @@ public:
 
 protected:
 
-    underlying_outbuf(CharT* pos_, CharT* end_) noexcept
+    underlying_outbuf(char_type* pos_, char_type* end_) noexcept
         : _pos(pos_), _end(end_)
     { }
 
-    underlying_outbuf(CharT* pos_, std::size_t s) noexcept
+    underlying_outbuf(char_type* pos_, std::size_t s) noexcept
         : _pos(pos_), _end(pos_ + s)
     { }
 
-    void set_pos(CharT* p) noexcept
+    void set_pos(char_type* p) noexcept
     { _pos = p; };
-    void set_end(CharT* e) noexcept
+    void set_end(char_type* e) noexcept
     { _end = e; };
     void set_good(bool g) noexcept
     { _good = g; };
 
 private:
 
-    CharT* _pos;
-    CharT* _end;
+    char_type* _pos;
+    char_type* _end;
     bool _good = true;
     friend class boost::outbuf::detail::outbuf_test_tool;
 };
 
 template <typename CharT>
-using underlying_outbuf_alias
-    = boost::outbuf::underlying_outbuf
-          < boost::outbuf::underlying_outbuf_char_type<CharT> >;
-
-template <typename CharT>
 class basic_outbuf;
 
 template <typename CharT>
-class basic_outbuf
-    : private boost::outbuf::underlying_outbuf_alias<CharT>
+class basic_outbuf: private boost::outbuf::underlying_outbuf<sizeof(CharT)>
 {
-    using _underlying_char_t = boost::outbuf::underlying_outbuf_char_type<CharT>;
-    using _underlying_impl = boost::outbuf::underlying_outbuf<_underlying_char_t>;
+    using _underlying_impl = boost::outbuf::underlying_outbuf<sizeof(CharT)>;
+    using _underlying_char_t = typename _underlying_impl::char_type;
 
 public:
 
@@ -300,10 +291,11 @@ void outbuf_put(Outbuf& ob, CharT c)
 
 } // namespace detail
 
-template <typename CharT>
-inline void write( boost::outbuf::underlying_outbuf<CharT>& ob
-                 , const CharT* str
-                 , std::size_t len )
+template <std::size_t CharSize>
+inline void write
+    ( boost::outbuf::underlying_outbuf<CharSize>& ob
+    , const boost::outbuf::underlying_outbuf_char_type<CharSize>* str
+    , std::size_t len )
 {
     boost::outbuf::detail::outbuf_write(ob, str, len);
 }
@@ -324,10 +316,11 @@ inline void write( boost::outbuf::basic_outbuf_noexcept<CharT>& ob
     boost::outbuf::detail::outbuf_write(ob, str, len);
 }
 
-template <typename CharT>
-inline void write( boost::outbuf::underlying_outbuf<CharT>& ob
-                 , const CharT* str
-                 , const CharT* str_end )
+template <std::size_t CharSize>
+inline void write
+    ( boost::outbuf::underlying_outbuf<CharSize>& ob
+    , const boost::outbuf::underlying_outbuf_char_type<CharSize>* str
+    , const boost::outbuf::underlying_outbuf_char_type<CharSize>* str_end )
 {
     BOOST_ASSERT(str_end >= str);
     boost::outbuf::detail::outbuf_write(ob, str, str_end - str);
@@ -375,8 +368,10 @@ inline void write( boost::outbuf::basic_outbuf_noexcept<wchar_t>& ob
     boost::outbuf::detail::outbuf_write(ob, str, std::wcslen(str));
 }
 
-template <typename CharT>
-inline void put( boost::outbuf::underlying_outbuf<CharT>& ob, CharT c )
+template <std::size_t CharSize>
+inline void put
+    ( boost::outbuf::underlying_outbuf<CharSize>& ob
+    , boost::outbuf::underlying_outbuf_char_type<CharSize> c )
 {
     boost::outbuf::detail::outbuf_put(ob, c);
 }
@@ -415,13 +410,15 @@ class outbuf_test_tool
 {
 public:
 
-    template<typename CharT>
-    static void turn_into_bad(underlying_outbuf<CharT>& ob)
+    template<std::size_t CharSize>
+    static void turn_into_bad(underlying_outbuf<CharSize>& ob)
     {
         ob.set_good(false);
     }
-    template<typename CharT>
-    static void force_set_pos(underlying_outbuf<CharT>& ob, CharT* pos)
+    template<std::size_t CharSize>
+    static void force_set_pos
+        ( underlying_outbuf<CharSize>& ob
+        , boost::outbuf::underlying_outbuf_char_type<CharSize>* pos)
     {
         ob.set_pos(pos);
     }

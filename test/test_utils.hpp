@@ -171,10 +171,13 @@ inline void turn_into_bad(boost::outbuf::basic_outbuf<CharT>& ob)
 {
     boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
+
 template <typename CharT>
 inline void force_set_pos(boost::outbuf::basic_outbuf<CharT>& ob, CharT* pos)
 {
-    auto * upos = reinterpret_cast<boost::outbuf::underlying_outbuf_char_type<CharT>*>(pos);
+    using underlying_ob = boost::outbuf::underlying_outbuf<sizeof(CharT)>;
+    using underlying_char_type = typename underlying_ob::char_type;
+    auto * upos = reinterpret_cast<underlying_char_type*>(pos);
     boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
 }
 
@@ -183,13 +186,15 @@ inline void turn_into_bad(boost::outbuf::basic_outbuf_noexcept<CharT>& ob)
 {
     boost::outbuf::detail::outbuf_test_tool::turn_into_bad(ob.as_underlying());
 }
+
 template <typename CharT>
 inline void force_set_pos(boost::outbuf::basic_outbuf_noexcept<CharT>& ob, CharT* pos)
 {
-    auto * upos = reinterpret_cast<boost::outbuf::underlying_outbuf_char_type<CharT>*>(pos);
+    using underlying_ob = boost::outbuf::underlying_outbuf<sizeof(CharT)>;
+    using underlying_char_type = typename underlying_ob::char_type;
+    auto * upos = reinterpret_cast<underlying_char_type*>(pos);
     boost::outbuf::detail::outbuf_test_tool::force_set_pos(ob.as_underlying(), upos);
 }
-
 
 } // namespace test_utils
 
