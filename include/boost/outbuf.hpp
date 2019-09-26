@@ -152,16 +152,17 @@ public:
     {
         _underlying_impl::advance_to(reinterpret_cast<_underlying_char_t*>(p));
     }
-    void advance(std::size_t n)
+    _underlying_impl& as_underlying() noexcept
     {
-        _underlying_impl::advance(n);
+        return *this;
     }
-    _underlying_impl& as_underlying()
+    const _underlying_impl& as_underlying() const noexcept
     {
         return *this;
     }
 
     using _underlying_impl::size;
+    using _underlying_impl::advance;
     using _underlying_impl::good;
     using _underlying_impl::ensure;
     using _underlying_impl::recycle;
@@ -333,7 +334,7 @@ inline void write( boost::basic_outbuf<CharT>& ob
 template <typename CharT>
 inline void write( boost::basic_outbuf_noexcept<CharT>& ob
                  , const CharT* str
-                 , const CharT* str_end )
+                 , const CharT* str_end ) noexcept
 {
     BOOST_ASSERT(str_end >= str);
     boost::detail::outbuf_write(ob, str, str_end - str);
@@ -346,7 +347,7 @@ inline void write( boost::basic_outbuf<char>& ob
 }
 
 inline void write( boost::basic_outbuf_noexcept<char>& ob
-                 , const char* str )
+                 , const char* str ) noexcept
 {
     boost::detail::outbuf_write(ob, str, std::strlen(str));
 }
@@ -358,7 +359,7 @@ inline void write( boost::basic_outbuf<wchar_t>& ob
 }
 
 inline void write( boost::basic_outbuf_noexcept<wchar_t>& ob
-                 , const wchar_t* str )
+                 , const wchar_t* str ) noexcept
 {
     boost::detail::outbuf_write(ob, str, std::wcslen(str));
 }
@@ -378,15 +379,15 @@ inline void put( boost::basic_outbuf<CharT>& ob, CharT c )
 }
 
 template <typename CharT>
-inline void put( boost::basic_outbuf_noexcept<CharT>& ob, CharT c )
+inline void put( boost::basic_outbuf_noexcept<CharT>& ob, CharT c ) noexcept
 {
-    boost::detail::outbuf_write(ob, c);
+    boost::detail::outbuf_put(ob, c);
 }
 // type aliases
 
 #if defined(__cpp_lib_byte)
-using bin_outbuf           = basic_outbuf<char8_t>;
-using bin_outbuf_noexcept  = basic_outbuf_noexcept<char8_t>;
+using bin_outbuf           = basic_outbuf<std::byte>;
+using bin_outbuf_noexcept  = basic_outbuf_noexcept<std::byte>;
 #endif
 
 #if defined(__cpp_char8_t)
@@ -496,15 +497,16 @@ public:
 
     result finish()
     {
-        if (this->good())
+        bool g = this->good();
+        if (g)
         {
-            auto p = this->pos();
-            *p = CharT();
-            this->set_pos(p + (p != this->end()));
-            return { p, false };
+            _it = this->pos();
+            this->set_good(false);
         }
+        this->set_pos(outbuf_garbage_buf<CharT>());
+        this->set_end(outbuf_garbage_buf_end<CharT>());
         *_it = CharT();
-        return { _it, true };
+        return { _it, ! g };
     }
 
 private:

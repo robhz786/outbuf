@@ -11,8 +11,6 @@ int main()
         const char s1a[] = "Hello";
         const char s1b[] = " World";
         const char s2[] = "Second string content";
-        const char s3a[] = "Third";
-        const char s3b[] = " string content";
 
         const char expected[]
             = "Hello World\0Second string content\0Third string cont";
@@ -28,27 +26,14 @@ int main()
         BOOST_TEST_EQ(*r1.ptr, '\0');
         BOOST_TEST_EQ(r1.ptr, &buff[11]);
         BOOST_TEST_CSTR_EQ(buff, "Hello World");
-        BOOST_TEST(sw.good());
+        BOOST_TEST(! sw.good());
 
         boost::write(sw, s2);
         auto r2 = sw.finish();
-        BOOST_TEST(! r2.truncated);
+        BOOST_TEST(! sw.good());
+        BOOST_TEST(r2.truncated);
         BOOST_TEST_EQ(*r2.ptr, '\0');
-        BOOST_TEST_EQ(r2.ptr, r1.ptr + 1 + strlen(s2));
-        BOOST_TEST_CSTR_EQ(r1.ptr + 1, s2);
-        BOOST_TEST(sw.good());
-
-        boost::write(sw, s3a);
-        BOOST_TEST(sw.good());
-        boost::write(sw, s3b);
-        BOOST_TEST(!sw.good());
-        auto r3 = sw.finish();
-        BOOST_TEST(!sw.good());
-        BOOST_TEST(r3.truncated);
-        BOOST_TEST_EQ(r3.ptr, buff + sizeof(buff) - 1);
-        BOOST_TEST_EQ(*r3.ptr, '\0');
-
-        BOOST_TEST_EQ(0, memcmp(expected, buff, sizeof(buff)));
+        BOOST_TEST_EQ(r2.ptr, r1.ptr);
     }
 
     {
