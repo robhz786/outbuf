@@ -14,7 +14,7 @@ void test_discarded_outbuf()
 
     auto tiny_str = test_utils::make_tiny_string<CharT>();
     auto double_str = test_utils::make_double_string<CharT>();
- 
+
     write(dob, tiny_str.data(), tiny_str.size());
     write(dob, double_str.data(), double_str.size());
 

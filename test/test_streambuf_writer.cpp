@@ -15,7 +15,7 @@ void test_successfull_writing()
 
     std::basic_ostringstream<CharT> dest;
     boost::basic_streambuf_writer<CharT> writer(*dest.rdbuf());
-    
+
     auto expected_content = tiny_str + double_str;
 
     write(writer, tiny_str.data(), tiny_str.size());
@@ -56,7 +56,7 @@ void test_failing_to_recycle()
 
 template <typename CharT>
 void test_failing_to_finish()
-{    
+{
     auto double_str = test_utils::make_double_string<CharT>();
     auto half_str = test_utils::make_half_string<CharT>();
     auto expected_content = double_str;
@@ -78,7 +78,7 @@ void test_failing_to_finish()
     BOOST_TEST_EQ(status.count, obtained_content.size());
     BOOST_TEST(obtained_content == expected_content);
 }
-    
+
 int main()
 {
     test_successfull_writing<char>();

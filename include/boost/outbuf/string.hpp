@@ -191,6 +191,11 @@ public:
         this->do_finish();
     }
 
+    void do_reserve(std::size_t s)
+    {
+        _str.reserve(_str.size() + s);
+    }
+
 private:
 
     template <typename, bool, typename>
@@ -238,6 +243,11 @@ public:
         return std::move(_str);
     }
 
+    void do_reserve(std::size_t s)
+    {
+        _str.reserve(s);
+    }
+
 private:
 
     template <typename, bool, typename>
@@ -258,7 +268,7 @@ private:
 template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT>  >
-class basic_string_appender_noexcept
+class basic_string_appender_noexcept final
     : public boost::detail::basic_string_appender_impl
         < true, CharT, Traits, Allocator >
 {
@@ -272,12 +282,17 @@ public:
     {
         this->do_recycle();
     }
+
+    void reserve(std::size_t s)
+    {
+        this->do_reserve(s);
+    }
 };
 
 template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT> >
-class basic_string_appender
+class basic_string_appender final
     : public boost::detail::basic_string_appender_impl
         < false, CharT, Traits, Allocator >
 {
@@ -291,12 +306,17 @@ public:
     {
         this->do_recycle();
     }
+
+    void reserve(std::size_t s)
+    {
+        this->do_reserve(s);
+    }
 };
 
 template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT> >
-class basic_string_maker_noexcept
+class basic_string_maker_noexcept final
     : public boost::detail::basic_string_maker_impl
         < true, CharT, Traits, Allocator >
 {
@@ -310,12 +330,17 @@ public:
     {
         this->do_recycle();
     }
+
+    void reserve(std::size_t s)
+    {
+        this->do_reserve(s);
+    }
 };
 
 template < typename CharT
          , typename Traits = std::char_traits<CharT>
          , typename Allocator = std::allocator<CharT> >
-class basic_string_maker
+class basic_string_maker final
     : public boost::detail::basic_string_maker_impl
         < false, CharT, Traits, Allocator >
 {
@@ -328,6 +353,11 @@ public:
     void recycle() override
     {
         this->do_recycle();
+    }
+
+    void reserve(std::size_t s)
+    {
+        this->do_reserve(s);
     }
 };
 

@@ -21,7 +21,7 @@ public:
     {
         BOOST_ASSERT(dest_ != nullptr);
     }
-    
+
     narrow_cfile_writer() = delete;
     narrow_cfile_writer(const narrow_cfile_writer&) = delete;
     narrow_cfile_writer(narrow_cfile_writer&&) = delete;
@@ -62,7 +62,7 @@ public:
         }
         return {_count, g};
     }
-    
+
 private:
 
     std::FILE* _dest;
@@ -119,16 +119,16 @@ public:
         recycle();
         auto g = this->good();
         this->set_good(false);
-        return {_count, g};    
+        return {_count, g};
     }
-    
+
   private:
 
     std::FILE* _dest;
     std::size_t _count = 0;
     static constexpr std::size_t _buf_size
         = boost::min_size_after_recycle<wchar_t>();
-    wchar_t _buf[_buf_size];  
+    wchar_t _buf[_buf_size];
 };
 
 } // namespace outbuf
