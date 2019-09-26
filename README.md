@@ -1,4 +1,4 @@
-documentation: http://robhz786.github.io/outbuf/doc/html/index.html
+documentation: http://robhz786.github.io/outbuf/doc/outbuf.html
 
 ### License
 
