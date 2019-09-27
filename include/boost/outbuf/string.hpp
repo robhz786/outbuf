@@ -383,8 +383,8 @@ using wstring_maker_noexcept = basic_string_maker_noexcept<wchar_t>;
 
 #if defined(__cpp_char8_t)
 
-using u8string_appender = basic_string_appender<NoExcept, char8_t>;
-using u8string_maker = basic_string_maker<NoExcept, char8_t>;
+using u8string_appender = basic_string_appender<char8_t>;
+using u8string_maker = basic_string_maker<char8_t>;
 using u8string_appender_noexcept = basic_string_appender_noexcept<char8_t>;
 using u8string_maker_noexcept = basic_string_maker_noexcept<char8_t>;
 
