@@ -279,13 +279,13 @@ The code above can be rewriten like this:
 
 void get_message(boost::basic_outbuf<char>& dest)
 {
-    dest.ensure(5);
+    dest.require(5);
     std::strcpy(dest.pos(), "Hello");
     dest.advance(5);
     // ...
 }
 ----
-`dest.ensure(s)` does just that: it calls `recycle` if the
+`dest.require(s)` does just that: it calls `recycle` if the
 the available buffer's space is less than `s`.
 
 The range [`pos()`, `end()`) is always a valid accessible memory area.
@@ -454,7 +454,7 @@ public:
     bool good() const noexcept;
     void advance_to(char_type* p);
     void advance(std::size_t n);
-    void ensure(std::size_t s);
+    void require(std::size_t s);
 
     virtual bool recycle() = 0;
 
@@ -555,10 +555,10 @@ Posconditions::
 // was not called in this object yet, since this object was constructed.
 
 
-[[underlying_outbuf_ensure]]
+[[underlying_outbuf_require]]
 [source,cpp]
 ----
-void ensure(std::size_t s)
+void require(std::size_t s)
 ----
 [horizontal]
 Effect:: Calls `recycle()` if `size() < s`.
@@ -734,7 +734,7 @@ public:
     using underlying_outbuf<sizeof(CharT)>::size;
     using underlying_outbuf<sizeof(CharT)>::advance;
     using underlying_outbuf<sizeof(CharT)>::good;
-    using underlying_outbuf<sizeof(CharT)>::ensure;
+    using underlying_outbuf<sizeof(CharT)>::require;
     using underlying_outbuf<sizeof(CharT)>::recycle;
 
 protected:
@@ -828,7 +828,7 @@ Precondition:: `p \<= end()`
     using underlying_outbuf<sizeof(CharT)>::size;
     using underlying_outbuf<sizeof(CharT)>::advance;
     using underlying_outbuf<sizeof(CharT)>::good;
-    using underlying_outbuf<sizeof(CharT)>::ensure;
+    using underlying_outbuf<sizeof(CharT)>::require;
     using underlying_outbuf<sizeof(CharT)>::recycle;
 ----
 

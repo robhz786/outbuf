@@ -9,7 +9,7 @@
 
 #include <cstring>
 #include <cwchar>
-#include <cstddef>
+#include <cstdint>
 
 namespace boost {
 namespace detail {
@@ -83,7 +83,7 @@ public:
         BOOST_ASSERT(pos() < end());
         ++_pos;
     }
-    void ensure(std::size_t s)
+    void require(std::size_t s)
     {
         BOOST_ASSERT(s <= boost::min_size_after_recycle<char_type>());
         if (pos() + s > end())
@@ -91,6 +91,10 @@ public:
             recycle();
         }
         BOOST_ASSERT(pos() + s <= end());
+    }
+    void ensure(std::size_t s)
+    {
+        require(s);
     }
 
     virtual void recycle() = 0;
@@ -164,6 +168,7 @@ public:
     using _underlying_impl::size;
     using _underlying_impl::advance;
     using _underlying_impl::good;
+    using _underlying_impl::require;
     using _underlying_impl::ensure;
     using _underlying_impl::recycle;
 
