@@ -17,39 +17,33 @@ NOTE: This library does not belong to the https://www.boost.org/[Boost C++ libra
 
 === Rationale
 
-The C++ Standard Library does not provide any good abstraction
-for output stream. If you think `std::basic_ostream` is
-satisfactory, then suppose you want to implement an encoder --
-let's say to Base64 -- and you create a function more or
-less like this:
-[source,cpp]
-----
-void to_base64(std::ostream& dest, const std::byte* src, std::size_t count);
-----
-You will face two issues:
+Suppose you want to implement an encoder. Let's say to Base64.
+That should be a simple task, right? But it turns out that is
+hard to find the ideal design. Let's consider a function that
+returns a string object:
 
-- Your function is complex to use. The user needs to implement
-a class that derives from `ostream` to customize the
-destination. It's a complex task for most C++ programmers.
-
-- It's impossible to achieve a good perfomance. `std::ostream` does
-not provide direct access to the buffer. `to_base64` needs to call
-member functions like `write` or `put` for every little piece
-of the content, or to use an itermediate buffer. 
-
-// Dependency on OS:: `std::ostream` is not available in a
-// https://en.cppreference.com/w/cpp/freestanding[freestanding implementation].
-// Why a simple thing like a Base64 encoder should
-// require an operating system?
-
-You may find this irrelevant, since `to_base64` could
-simply instead return the result in a `std::string`:
 [source,cpp]
 ----
 std::string to_base64(const std::byte* src, std::size_t count);
 ----
-However that has an extra cost of a heap allocation.
-Still, you may think, we could adopt the C-style:
+It's simple and easy to use. But it has an extra cost of a heap
+allocation, which some users may dislike.
+
+An alternative is to use `std::ostream`:
+[source,cpp]
+----
+void to_base64(std::ostream& dest, const std::byte* src, std::size_t count);
+----
+However such function is complex to use. The user needs to implement
+a class that derives from `ostream` to customize the
+destination. It's a complex task for most C++ programmers.
+
+Also, `std::ostream` and `std::string` are not available
+in freestanding C++ implementations. Thus they should be avoided
+if you want your function to usable in the widest range of
+environments.
+
+So, you may think, let's adopt the C-style:
 [source,cpp]
 ----
 bool to_base64( char** dest
@@ -60,7 +54,7 @@ bool to_base64( char** dest
 This way the user would need to successively call `to_base64`
 until the whole input is read. Besides the inconvenience,
 this still has a important limitation: sometimes the input is not
-available as an array of bytes -- like when it is lazyly avaluated.
+available as an array of bytes. Sometimes it is lazyly avaluated.
 For example, suppose you have a class `Image` that has member
 functions that encodes to different image formats:
 
@@ -80,7 +74,7 @@ Now how do you design the all these functions, such
 that one could convert an image to JPEG, and then to
 Base64? What signatures should they have ?
 
-The `basic_outbuf` abstract class template solves the puzzle.
+The `basic_outbuf` abstract class template aims to solve the puzzle.
 Now you can declare `to_jpeg` like this:
 
 [source,cpp]
